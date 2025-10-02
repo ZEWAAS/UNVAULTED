@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="fixed top-[2vh] left-1/2 transform -translate-x-1/2 w-[75%] max-w-[100vw] z-50 rounded-xl border border-[var(--color-border)] bg-white/60 backdrop-blur-md flex items-center justify-between px-6 py-3"
+    class="fixed top-[2vh] left-1/2 transform -translate-x-1/2 w-[85%] max-w-[100vw] z-50 rounded-xl border border-[var(--color-border)] bg-white/60 backdrop-blur-md flex items-center justify-between px-6 py-3"
   >
     <div class="grid grid-cols-3 gap-10">
       <span class="font-bold text-xl tracking-widest text-gray-800 select-none">UNVAULTED</span>
