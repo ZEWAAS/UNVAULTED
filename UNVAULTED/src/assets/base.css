@@ -11,6 +11,7 @@
   --color-primary: #1A3E5B;
   --color-dark: #0A1424;
   --color-border: #E6E6E6;
+  --color-muted: #7A7A7A;
   --vt-c-indigo: #2c3e50;
 
   --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
@@ -30,7 +31,7 @@
   --color-background-soft: var(--vt-c-white-soft);
   --color-background-mute: var(--vt-c-white-mute);
 
-  --color-border: var(--vt-c-divider-light-2);
+  /*--color-border: var(--vt-c-divider-light-2);*/
   --color-border-hover: var(--vt-c-divider-light-1);
 
   --color-heading: var(--color-dark);
