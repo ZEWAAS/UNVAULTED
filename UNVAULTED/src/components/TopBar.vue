@@ -1,10 +1,20 @@
 <template>
   <nav
-    class="fixed top-[2vh] left-1/2 -translate-x-1/2 w-[85%] max-w-[100vw] z-50 rounded-xl border border-[var(--color-border)] bg-white/60 glass flex items-center justify-between px-6 py-3 transition-[border-color,background-color,backdrop-filter] duration-200"
+    class="fixed top-[2vh] left-1/2 -translate-x-1/2 w-[85%] max-w-[100vw] z-50 rounded-xl border border-[var(--color-border)] glass flex items-center justify-between px-6 py-3 transition-[border-color,background-color,backdrop-filter] duration-200"
   >
     <div class="grid grid-cols-3 gap-10 items-center">
-      <span class="text-2xl tracking-widest select-none  font-weight-900 text-[var(--color-gold)]"> UNVAULTED </span>
-
+<span
+  class="text-2xl tracking-widest select-none font-weight-900 text-[var(--color-gold)]"
+  style="text-shadow:
+    0 0 1.5px rgba(255,255,255,1),
+    0 0 6px rgba(255,255,255,0.95),
+    0 0 14px rgba(255,255,255,0.8),
+    0 0 26px rgba(255,255,255,0.6),
+    0 0 40px rgba(255,255,255,0.45),
+    0 0 64px rgba(255,255,255,0.3),
+    0 1px 0 rgba(0,0,0,0.18)">
+  UNVAULTED
+</span>
       <div class="flex gap-4">
         <a href="#" class="group relative transition-colors hover:font-semibold">
           <span>Main</span>
@@ -31,7 +41,6 @@
 
       <div class="relative">
         <button
-          ref="triggerRef"
           @click="toggleDropdown"
           @keydown="onTriggerKeydown"
           class="rounded-full transition-transform duration-150 ease-out hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
@@ -118,62 +127,14 @@
 import { ref, onMounted, onBeforeUnmount, nextTick, h } from 'vue'
 
 const dropdown = ref(false)
-const triggerRef = ref<HTMLButtonElement | null>(null)
-const itemsRefs = ref<HTMLAnchorElement[]>([])
 const menuId = 'profile-menu'
 
-function setItemRef(el: HTMLAnchorElement | null) {
-  if (!el) return
-  // De-dupe and keep ordered
-  if (!itemsRefs.value.includes(el)) itemsRefs.value.push(el)
-}
 
-function openMenu() {
-  dropdown.value = true
-  nextTick(() => {
-    itemsRefs.value[0]?.focus()
-  })
-}
-function closeMenu() {
-  dropdown.value = false
-  nextTick(() => {
-    triggerRef.value?.focus()
-  })
-}
 function toggleDropdown() {
-  dropdown.value ? closeMenu() : openMenu()
+  dropdown.value = !dropdown.value;
 }
 
-function onTriggerKeydown(e: KeyboardEvent) {
-  if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault()
-    openMenu()
-  }
-  if (e.key === 'Escape') {
-    e.preventDefault()
-    closeMenu()
-  }
-}
-function onMenuKeydown(e: KeyboardEvent) {
-  const i = itemsRefs.value.indexOf(document.activeElement as HTMLAnchorElement)
-  if (e.key === 'Escape') {
-    e.preventDefault()
-    closeMenu()
-  } else if (e.key === 'ArrowDown') {
-    e.preventDefault()
-    itemsRefs.value[(i + 1) % itemsRefs.value.length]?.focus()
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault()
-    itemsRefs.value[(i - 1 + itemsRefs.value.length) % itemsRefs.value.length]?.focus()
-  } else if (e.key === 'Tab') {
-    // Allow natural tab to move focus out; close on Shift+Tab from first or Tab from last
-    if ((!e.shiftKey && i === itemsRefs.value.length - 1) || (e.shiftKey && i === 0)) {
-      closeMenu()
-    }
-  }
-}
 
-// Close on outside click
 function handleClickOutside(e: MouseEvent) {
   const nav = (e.target as HTMLElement).closest('nav')
   if (!nav) dropdown.value = false
@@ -186,7 +147,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('click', handleClickOutside)
 })
 
-// Icons (same as before)
 const HistoryIcon = (props: any) =>
   h(
     'svg',
@@ -305,7 +265,6 @@ nav.glass::before {
   border-radius: inherit; 
 }
 
-/* ensure nav children render above the blur layer */
 nav.glass > * {
   z-index: 1;
 }
