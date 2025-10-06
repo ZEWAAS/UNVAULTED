@@ -1,9 +1,13 @@
 <script setup>
+import ItemComponent from '../components/ItemComponent.vue';
 </script>
 
 <template>
   <main>
-    <p>HOME HOME HOME</p>
+    <div class="spacer h-30"></div>
+    <div class="flex max-w-[70vw] justify-center mx-auto">
+      <ItemComponent />
+    </div>
   </main>
 </template>
 

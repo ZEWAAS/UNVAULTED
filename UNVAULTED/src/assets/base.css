@@ -10,8 +10,11 @@
 
   --color-primary: #1A3E5B;
     --color-accent: #1A3E5B;
+    --color-gold: #F2B036;
+    --color-red: #F25C54;
   --color-dark: #0A1424;
   --color-border: #E6E6E6;
+  --color-muted: #7A7A7A;
   --vt-c-indigo: #2c3e50;
 
   --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
@@ -24,6 +27,10 @@
   --vt-c-text-dark-1: var(--vt-c-white);
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
 }
+main {
+      background-image: url(./history.png);
+
+}
 
 /* semantic color variables for this project */
 :root {
@@ -31,7 +38,7 @@
   --color-background-soft: var(--vt-c-white-soft);
   --color-background-mute: var(--vt-c-white-mute);
 
-  --color-border: var(--vt-c-divider-light-2);
+  /*--color-border: var(--vt-c-divider-light-2);*/
   --color-border-hover: var(--vt-c-divider-light-1);
 
   --color-heading: var(--color-dark);
