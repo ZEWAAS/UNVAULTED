@@ -55,7 +55,7 @@
           <div class="flex items-center justify-between mb-2">
             <span class="text-sm text-gray-700">Views</span>
             <span class="text-xs text-gray-600"
-              >0–{{ formatK(viewsMax) }} <span class="i-lucide-eye size-3 inline-block"></span
+              >0–{{ viewsMax }} <span class="i-lucide-eye size-3 inline-block"></span
             ></span>
           </div>
           <input
@@ -124,9 +124,5 @@ const rating = ref(5)
 const viewsMax = 1500
 const views = ref(viewsMax)
 
-
-function formatK(v: number) {
-  return v >= 1000 ? (v / 1000).toFixed(v % 1000 === 0 ? 0 : 1) + 'k' : String(v)
-}
 
 </script>

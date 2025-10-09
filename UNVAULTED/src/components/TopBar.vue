@@ -3,18 +3,21 @@
     class="fixed top-[2vh] left-1/2 -translate-x-1/2 w-[85%] max-w-[100vw] z-50 rounded-xl border border-[var(--color-border)] glass flex items-center justify-between px-6 py-3 transition-[border-color,background-color,backdrop-filter] duration-200"
   >
     <div class="grid grid-cols-3 gap-10 items-center">
-<span
-  class="text-2xl tracking-widest select-none font-weight-900 text-[var(--color-gold)]"
-  style="text-shadow:
-    0 0 1.5px rgba(255,255,255,1),
-    0 0 6px rgba(255,255,255,0.95),
-    0 0 14px rgba(255,255,255,0.8),
-    0 0 26px rgba(255,255,255,0.6),
-    0 0 40px rgba(255,255,255,0.45),
-    0 0 64px rgba(255,255,255,0.3),
-    0 1px 0 rgba(0,0,0,0.18)">
-  UNVAULTED
-</span>
+      <span
+        class="text-2xl tracking-widest select-none font-weight-900 text-[var(--color-gold)]"
+        style="
+          text-shadow:
+            0 0 1.5px rgba(255, 255, 255, 1),
+            0 0 6px rgba(255, 255, 255, 0.95),
+            0 0 14px rgba(255, 255, 255, 0.8),
+            0 0 26px rgba(255, 255, 255, 0.6),
+            0 0 40px rgba(255, 255, 255, 0.45),
+            0 0 64px rgba(255, 255, 255, 0.3),
+            0 1px 0 rgba(0, 0, 0, 0.18);
+        "
+      >
+        UNVAULTED
+      </span>
       <div class="flex gap-4">
         <a href="#" class="group relative transition-colors hover:font-semibold">
           <span>Main</span>
@@ -42,7 +45,6 @@
       <div class="relative">
         <button
           @click="toggleDropdown"
-          @keydown="onTriggerKeydown"
           class="rounded-full transition-transform duration-150 ease-out hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           aria-haspopup="menu"
           :aria-expanded="dropdown ? 'true' : 'false'"
@@ -67,17 +69,17 @@
           <div
             v-if="dropdown"
             :id="menuId"
-            class="absolute top-22 -right-6 rounded-xl  bg-white/60 backdrop-blur-md border border-[var(--color-border)] w-50 z-50 animate-in fade-in overflow-hidden"
+            class="absolute top-22 -right-6 rounded-xl bg-white/60 backdrop-blur-md border border-[var(--color-border)] w-50 z-50 animate-in fade-in overflow-hidden"
             role="menu"
             aria-label="Profile menu"
             @keydown="onMenuKeydown"
           >
             <ul class="divide-y divide-[var(--color-border)]">
               <li v-for="(item, idx) in items" :key="item.label">
-                <a
-                  :href="item.href"
+                <router-link
+                  :to="item.to"
                   ref="setItemRef"
-                  class="group flex items-center gap-3 ps-4 pe-3 min-h-[3em] transition-colors  duration-150 ease-out hover:bg-[var(--color-accent)]/10 focus:bg-[var(--color-accent)]/15 focus:outline-none active:scale-[0.99] transition-transform"
+                  class="group flex items-center gap-3 ps-4 pe-3 min-h-[3em] transition-colors duration-150 ease-out hover:bg-[var(--color-accent)]/10 focus:bg-[var(--color-accent)]/15 focus:outline-none active:scale-[0.99] transition-transform"
                   role="menuitem"
                   tabindex="-1"
                 >
@@ -99,7 +101,7 @@
                   >
                     →
                   </span>
-                </a>
+                </router-link>
               </li>
 
               <li class="border-t border-[var(--color-border)]">
@@ -129,11 +131,9 @@ import { ref, onMounted, onBeforeUnmount, nextTick, h } from 'vue'
 const dropdown = ref(false)
 const menuId = 'profile-menu'
 
-
 function toggleDropdown() {
-  dropdown.value = !dropdown.value;
+  dropdown.value = !dropdown.value
 }
-
 
 function handleClickOutside(e: MouseEvent) {
   const nav = (e.target as HTMLElement).closest('nav')
@@ -244,25 +244,24 @@ const LogoutIcon = (props: any) =>
   )
 
 const items = [
-  { label: 'History', href: '#', icon: HistoryIcon },
-  { label: 'Your Offers', href: '#', icon: OffersIcon },
-  { label: 'Your Profile', href: '#', icon: ProfileIcon },
-  { label: 'Settings', href: '#', icon: SettingsIcon },
+  { label: 'History', to: '/', icon: HistoryIcon },
+  { label: 'Your Offers', to: '/', icon: OffersIcon },
+  { label: 'Your Profile', to: '/profile', icon: ProfileIcon },
+  { label: 'Settings', to: '/', icon: SettingsIcon },
 ]
 </script>
 
 <style scoped>
-
 nav.glass::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
-    background-color: rgb(255 255 255 / 0.6); /* bg-white/60 */
+  background-color: rgb(255 255 255 / 0.6); /* bg-white/60 */
 
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  z-index: 0;            /* sits under content */
-  border-radius: inherit; 
+  z-index: 0; /* sits under content */
+  border-radius: inherit;
 }
 
 nav.glass > * {
