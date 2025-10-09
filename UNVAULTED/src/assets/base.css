@@ -27,10 +27,6 @@
   --vt-c-text-dark-1: var(--vt-c-white);
   --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
 }
-main {
-      background-image: url(./history.png);
-
-}
 
 /* semantic color variables for this project */
 :root {
