@@ -10,7 +10,7 @@
           <p class="hidden group-hover:block text-gray-100 text-xs">{{ sellerName }}</p>
         </div>
         <div class="like-count absolute bottom-2 right-2 flex flex-row items-center gap-1 px-2 py-1 border border-[var(--color-border)]/40 rounded-full bg-white/10 backdrop-blur-md">
-          <span class="i-lucide-heart size-5"></span>
+          <span class="i-lucide-heart size-5"><svg width="16px" height="16px" viewBox="-2 -2 20 16" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff" transform="matrix(1, 0, 0, 1, 0, 0)"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#CCCCCC" stroke-width="0.256"></g><g id="SVGRepo_iconCarrier"> <path d="M1.24264 8.24264L8 15L14.7574 8.24264C15.553 7.44699 16 6.36786 16 5.24264V5.05234C16 2.8143 14.1857 1 11.9477 1C10.7166 1 9.55233 1.55959 8.78331 2.52086L8 3.5L7.21669 2.52086C6.44767 1.55959 5.28338 1 4.05234 1C1.8143 1 0 2.8143 0 5.05234V5.24264C0 6.36786 0.44699 7.44699 1.24264 8.24264Z" fill="#ffffff"></path> </g></svg></span>
           <p class="text-xs text-gray-100">{{ likeCount }}</p>
         </div>
       </div>
