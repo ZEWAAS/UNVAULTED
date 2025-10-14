@@ -136,7 +136,7 @@ const props = defineProps({
               {
               name: 'Racing Helmet',
               description: 'High-quality helmet for maximum safety.',
-              price: 299.99
+              price: 1299.99
               },
               {
               name: 'Racing Gloves',
