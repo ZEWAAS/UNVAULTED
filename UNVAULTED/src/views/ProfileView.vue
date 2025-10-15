@@ -32,10 +32,10 @@ const props = defineProps({
         required: true,
         default: () => ({
             name: 'Max Verstappen',
-            reviews: 45,
-            street: 'Red Bull Str. 1, 12345 Speed City',
-            followers: 33,
-            verification_status: 'Verified',
+            reviews: [{rating: 5, text: 'Great seller! Fast shipping and item as described.',user:"asdkjl3ujhnbkjl"}],
+            street: 'GEO LOCATION',
+            followers: ["asdlkfjlsnlhjl","asdflkjbnelkjhl"],
+            verified: true,
             image: 'https://tse3.mm.bing.net/th/id/OIP.vcjzhWLCN7-VOC95HeBsJAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3'
         })
     }
