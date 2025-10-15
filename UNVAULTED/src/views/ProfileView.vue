@@ -1,44 +1,153 @@
 <template>
-    <nav
-        class="fixed top-[15vh] left-1/2 transform -translate-x-1/2 w-[90%] max-w-[100vw] bg-white/60 backdrop-blur-md flex items-center px-6 py-3 gap-4"
-    >
-        
-    <img :src="props.user.image" alt="Profile Icon" class="profile-icon size-60 rounded-full aspect-square" />
-    <div class="flex flex-col gap-10">
-    <div class="flex flex-col">
-            <p class="font-bold text-xl tracking-widest text-gray-800 select-none">{{ props.user.name }}</p>
-            <p class="tracking-widest text-gray-800 select-none">{{ props.user.reviews }}&nbsp;Reviews</p>
+  <div
+    class="fixed top-[15vh] left-1/2 transform -translate-x-1/2 w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center shadow-md"
+  >
+    <!-- PROFILE HEADER -->
+    <div class="flex flex-col md:flex-row items-center md:items-start gap-6 w-full">
+      <img
+        :src="props.user.image"
+        alt="Profile Icon"
+        class="profile-icon w-40 h-40 rounded-full object-cover"
+      />
+      <div class="flex flex-col gap-6 text-center md:text-left">
+        <div>
+          <p class="font-bold text-2xl tracking-widest text-gray-800 select-none">
+            {{ props.user.name }}
+          </p>
+          <p class="tracking-widest text-gray-800 select-none">
+            {{ props.user.reviews.length }} Reviews
+          </p>
         </div>
-    <div class="flex flex-col gap-2">
-    <p class="font-bold tracking-widest text-gray-800 select-none">About:</p>     
-    <div class="grid grid-cols-[auto_auto] gap-1 ">
-            <img src="@/assets/location.png" class="size-5"></img>
-            <p class="tracking-widest text-gray-800 select-none">{{ props.user.street }}</p>
-            <img src="@/assets/follower.png" class="size-5"></img>
-            <p class="tracking-widest text-gray-800 select-none">{{ props.user.followers }}</p>
-            <img src="@/assets/verification.png" class="size-5"></img>
-            <p class="tracking-widest text-gray-800 select-none">{{ props.user.verification_status }}</p>
+
+        <div class="flex flex-col gap-2">
+          <p class="font-bold tracking-widest text-gray-800 select-none">
+            About:
+          </p>
+          <div class="grid grid-cols-[auto_auto] gap-1 justify-center md:justify-start">
+            <img src="@/assets/location.png" class="size-5" />
+            <p class="tracking-widest text-gray-800 select-none">
+              {{ props.user.street }}
+            </p>
+            <img src="@/assets/follower.png" class="size-5" />
+            <p class="tracking-widest text-gray-800 select-none">
+              {{ props.user.followers }} Followers
+            </p>
+            <img src="@/assets/verification.png" class="size-5" />
+            <p class="tracking-widest text-gray-800 select-none">
+              {{ props.user.verification_status }}
+            </p>
+          </div>
         </div>
+      </div>
     </div>
+
+    <!-- TABS (unter dem Profilbild) -->
+    <div class="flex gap-8 border-b border-gray-300 pt-10 w-full">
+      <button
+        @click="activeTab = 'products'"
+        :class="[ 
+          'pb-2 font-semibold tracking-wide transition-colors',
+          activeTab === 'products'
+            ? 'border-b-2 border-blue-600 text-blue-600'
+            : 'text-gray-600 hover:text-blue-600'
+        ]"
+      >
+        Products
+      </button>
+      <button
+        @click="activeTab = 'reviews'"
+        :class="[ 
+          'pb-2 font-semibold tracking-wide transition-colors',
+          activeTab === 'reviews'
+            ? 'border-b-2 border-blue-600 text-blue-600'
+            : 'text-gray-600 hover:text-blue-600'
+        ]"
+      >
+        Reviews
+      </button>
     </div>
-    </nav>
+
+    <!-- TAB CONTENT -->
+    <div class="mt-6 w-full text-center md:text-left">
+      <!-- PRODUCTS TAB -->
+      <div v-if="activeTab === 'products'">
+        <div v-if="props.user.products.length > 0" class="grid md:grid-cols-2 gap-6">
+          <div
+            v-for="(product, index) in props.user.products"
+            :key="index"
+            class="p-4 bg-white/80 rounded-xl shadow-md hover:shadow-lg transition-shadow"
+          >
+            <p class="font-semibold text-lg text-gray-800">{{ product.name }}</p>
+            <p class="text-gray-600">{{ product.description }}</p>
+            <p class="text-sm text-gray-500 mt-1">Price: {{ product.price }} €</p>
+          </div>
+        </div>
+        <p v-else class="text-gray-700 italic">No products yet.</p>
+      </div>
+
+      <!-- REVIEWS TAB -->
+      <div v-else>
+        <div v-if="props.user.reviews.length > 0" class="flex flex-col gap-4">
+          <div
+            v-for="(review, index) in props.user.reviews"
+            :key="index"
+            class="bg-white/80 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow"
+          >
+            <div class="flex justify-between items-center mb-2">
+              <p class="font-semibold text-gray-800">{{ review.author }}</p>
+              <p class="text-yellow-500">{{ '★'.repeat(review.rating) }}</p>
+            </div>
+            <p class="text-gray-700">{{ review.comment }}</p>
+          </div>
+        </div>
+        <p v-else class="text-gray-700 italic">No reviews yet.</p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 
 const props = defineProps({
-    user: {
-        type: Object,
-        required: true,
-        default: () => ({
-            name: 'Max Verstappen',
-            reviews: [{rating: 5, text: 'Great seller! Fast shipping and item as described.',user:"asdkjl3ujhnbkjl"}],
-            street: 'GEO LOCATION',
-            followers: ["asdlkfjlsnlhjl","asdflkjbnelkjhl"],
-            verified: true,
-            image: 'https://tse3.mm.bing.net/th/id/OIP.vcjzhWLCN7-VOC95HeBsJAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3'
-        })
-    }
+  user: {
+    type: Object,
+    required: true,
+    default: () => ({
+      name: 'Max Verstappen',
+      street: 'Red Bull Str. 1, 12345 Speed City',
+      followers: 33,
+      verification_status: 'Verified',
+      image:
+        'https://tse3.mm.bing.net/th/id/OIP.vcjzhWLCN7-VOC95HeBsJAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3',
+      reviews: [
+          {
+            author: 'Lewis Hamilton',
+            rating: 5,
+            comment: 'Fast delivery, top driver! Your car looks great from behind 😄'
+          },
+          {
+            author: 'Charles Leclerc',
+            rating: 4,
+            comment: 'Good race pace, but sometimes too aggressive.'
+          }
+        ],
+      products: [
+              {
+              name: 'Racing Helmet',
+              description: 'High-quality helmet for maximum safety.',
+              price: 1299.99
+              },
+              {
+              name: 'Racing Gloves',
+              description: 'Comfortable gloves for better grip.',
+              price: 79.99
+              }
+        ],
+    })
+  },
+  
 })
 
+const activeTab = ref('reviews')
 </script>
