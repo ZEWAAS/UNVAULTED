@@ -1,33 +1,14 @@
 {
   "name": "unvaulted",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "engines": {
-    "node": "^20.19.0 || >=22.12.0"
-  },
+  "version": "1.0.0",
+  "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test:unit": "vitest",
-    "format": "prettier --write src/"
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\""
   },
-  "dependencies": {
-    "@tailwindcss/vite": "^4.1.13",
-    "@vueform/slider": "^2.1.10",
-    "firebase": "^12.4.0",
-    "tailwindcss": "^4.1.13",
-    "vue": "^3.5.18",
-    "vue-router": "^4.5.1"
-  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "devDependencies": {
-    "@vitejs/plugin-vue": "^6.0.1",
-    "@vue/test-utils": "^2.4.6",
-    "jsdom": "^26.1.0",
-    "prettier": "3.6.2",
-    "vite": "^7.0.6",
-    "vite-plugin-vue-devtools": "^8.0.0",
-    "vitest": "^3.2.4"
+    "concurrently": "^9.2.1"
   }
 }
