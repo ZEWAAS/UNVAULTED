@@ -1,0 +1,17 @@
+# Node
+node_modules/
+dist/
+build/
+
+# Environment
+.env
+.env.local
+
+# Firebase service account
+serviceAccountKey.json
+
+# Logs
+*.log
+
+# Vite / Next / Vue
+.vite/
