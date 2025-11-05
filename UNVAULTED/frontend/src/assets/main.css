@@ -17,3 +17,18 @@ a,
   color: var(--color-dark);
   padding: 3px;
 }
+
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 0; /* sits under content */
+  border-radius: inherit;
+}
+
+.glass > * {
+  z-index: 1;
+}

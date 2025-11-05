@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="fixed top-[2vh] left-1/2 -translate-x-1/2 w-[85%] max-w-[100vw] z-50 rounded-xl border border-[var(--color-border)] glass flex items-center justify-between px-6 py-3 transition-[border-color,background-color,backdrop-filter] duration-200"
+    class="fixed top-[2vh] left-1/2 -translate-x-1/2 w-[85%] max-w-[100vw] z-50 rounded-xl border border-[var(--color-border)] glass bg-white/60 flex items-center justify-between px-6 py-3 transition-[border-color,background-color,backdrop-filter] duration-200"
   >
     <div class="grid grid-cols-3 gap-10 items-center">
       <span
@@ -250,21 +250,3 @@ const items = [
   { label: 'Settings', to: '/', icon: SettingsIcon },
 ]
 </script>
-
-<style scoped>
-nav.glass::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-color: rgb(255 255 255 / 0.6); /* bg-white/60 */
-
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  z-index: 0; /* sits under content */
-  border-radius: inherit;
-}
-
-nav.glass > * {
-  z-index: 1;
-}
-</style>
