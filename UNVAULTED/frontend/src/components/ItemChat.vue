@@ -5,12 +5,12 @@
     <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img
-          :src="seller.image"
+          :src="sellers[0].image"
           alt="Seller"
           class="w-10 h-10 rounded-full object-cover border border-gray-200"
         />
         <div>
-          <h2 class="font-semibold text-gray-900">{{ seller.name }}</h2>
+          <h2 class="font-semibold text-gray-900">{{ sellers[0].name }}</h2>
           <p class="text-sm text-gray-500">Chat about this item</p>
         </div>
       </div>
@@ -128,24 +128,17 @@ function sendMessage() {
 
   messages.value.push({ type: 'user', text })
 
-  // Simulate system or seller reply (demo)
   setTimeout(() => {
     if (messages.value.length === 1) {
       messages.value.push({
         type: 'system',
         text: 'Seller has been notified of your message.',
       })
-    } else {
-      messages.value.push({
-        type: 'seller',
-        text: `Thanks for your message! I'll reply soon.`,
-      })
     }
   }, 1200)
 
   newMessage.value = ''
 
-  // Auto scroll
   nextTick(() => {
     chatContainer.value.scrollTop = chatContainer.value.scrollHeight
   })
@@ -159,7 +152,6 @@ watch(messages, () => {
 </script>
 
 <style scoped>
-/* Smooth scrollbar and transitions */
 ::-webkit-scrollbar {
   width: 6px;
 }
