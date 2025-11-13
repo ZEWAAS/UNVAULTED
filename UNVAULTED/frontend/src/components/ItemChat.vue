@@ -1,6 +1,7 @@
 <template>
-  <div class="w-full mx-auto mt-8 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-    <!-- Chat Header -->
+  <div
+    class="w-full mx-auto mt-8 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden"
+  >
     <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
       <div class="flex items-center gap-3">
         <img
@@ -15,9 +16,7 @@
       </div>
     </div>
 
-    <!-- Chat Messages -->
     <div ref="chatContainer" class="h-[28rem] overflow-y-auto p-6 space-y-4 bg-gray-50">
-      <!-- System Message -->
       <div v-if="messages.length === 0" class="flex justify-center mt-10">
         <p class="text-gray-400 italic text-sm">Start chat by sending a message</p>
       </div>
@@ -32,7 +31,6 @@
           'justify-center': msg.type === 'system',
         }"
       >
-        <!-- System messages -->
         <div
           v-if="msg.type === 'system'"
           class="text-center text-gray-400 text-xs italic px-4 py-1"
@@ -40,7 +38,6 @@
           {{ msg.text }}
         </div>
 
-        <!-- User message -->
         <div
           v-else-if="msg.type === 'user'"
           class="bg-blue-600 text-white px-4 py-2 rounded-2xl max-w-[60%] shadow-sm"
@@ -48,7 +45,6 @@
           {{ msg.text }}
         </div>
 
-        <!-- Seller message -->
         <div
           v-else-if="msg.type === 'seller'"
           class="bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-2xl max-w-[60%] shadow-sm"
@@ -58,12 +54,8 @@
       </div>
     </div>
 
- <div
-      class="flex flex-col gap-3 p-4 bg-white border-t border-gray-200 sticky bottom-0"
-    >
-      <!-- Offer Options -->
+    <div class="flex flex-col gap-3 p-4 bg-white border-t border-gray-200 sticky bottom-0">
       <div class="flex flex-col md:flex-row gap-3">
-        <!-- Suggest Price -->
         <div class="flex items-center border border-gray-300 rounded-xl px-4 py-2 flex-1">
           <span class="text-gray-400 mr-2">€</span>
           <input
@@ -75,7 +67,6 @@
           />
         </div>
 
-        <!-- Offer Item -->
         <div class="flex items-center border border-gray-300 rounded-xl px-4 py-2 flex-1">
           <input
             v-model="offerItem"
@@ -85,7 +76,6 @@
           />
         </div>
 
-        <!-- Send Offer -->
         <button
           @click="sendOffer"
           class="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
@@ -93,29 +83,8 @@
           Send Offer
         </button>
       </div>
-
-      <!-- Normal Chat Input -->
-      <div class="flex gap-3 mt-2">
-        <input
-          v-model="newMessage"
-          @keyup.enter="sendMessage"
-          type="text"
-          placeholder="Type a message..."
-          class="flex-1 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <button
-          @click="sendMessage"
-          class="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
-        >
-          Send
-        </button>
-      </div>
     </div>
-
-    <!-- Chat Input -->
-    <div
-      class="border-t border-gray-200 bg-white p-4 flex items-center gap-3 sticky bottom-0"
-    >
+    <div class="border-t border-gray-200 bg-white p-4 flex items-center gap-3 sticky bottom-0">
       <input
         v-model="newMessage"
         @keyup.enter="sendMessage"
@@ -137,17 +106,19 @@
 import { ref, nextTick, watch } from 'vue'
 
 const props = defineProps({
-  productId: { type: [String, Number], required: true },
-  seller: {
-    type: Object,
-    default: () => ({
-      name: 'Unknown Seller',
-      image: 'https://via.placeholder.com/100',
-    }),
+  productId: { type: String, required: true },
+  sellers: {
+    type: Array,
+    default: () => [
+      {
+        name: 'Unknown Seller',
+        image: 'https://via.placeholder.com/100',
+      },
+    ],
   },
 })
 
-const messages = ref([]) // no initial system message to keep it clean
+const messages = ref([])
 const newMessage = ref('')
 const chatContainer = ref(null)
 
@@ -155,7 +126,6 @@ function sendMessage() {
   const text = newMessage.value.trim()
   if (!text) return
 
-  // Add user message
   messages.value.push({ type: 'user', text })
 
   // Simulate system or seller reply (demo)
