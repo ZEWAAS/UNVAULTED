@@ -16,7 +16,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",
     "@vueform/slider": "^2.1.10",
-    "firebase": "^12.4.0",
+    "firebase": "^12.6.0",
     "tailwindcss": "^4.1.13",
     "vue": "^3.5.18",
     "vue-router": "^4.5.1"

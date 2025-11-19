@@ -1,49 +1,51 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
-import ProfileView from '../views/ProfileView.vue'
-import SignupView from '../views/SignupView.vue'
+import { ref } from 'vue'
+import { auth } from '@/firebase/firebase-client.js'
+import { onAuthStateChanged } from 'firebase/auth'
+
+// --- Globaler User State ---
+export const currentUser = ref(undefined) // undefined = noch nicht geladen
+
+// --- Auth State Listener ---
+onAuthStateChanged(auth, (user) => {
+  currentUser.value = user
+})
+
+// --- Routes ---
+const routes = [
+  { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
+  { path: '/about', name: 'about', component: () => import('../views/ProfileView.vue') },
+  { path: '/profile', name: 'profile', component: () => import('../views/ProfileView.vue') },
+  { path: '/signup', name: 'signup', component: () => import('../views/SignupView.vue') },
+  { path: '/items/:id', name: 'items', component: () => import('../views/ItemView.vue') },
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: HomeView,
-    },
-    {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => ProfileView,
-    },
-    {
-      path: '/profile',
-      name: 'profile',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => ProfileView,
-    },
-    {
-      path: '/signup',
-      name: 'signup',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => SignupView,
-    },
-        {
-      path: '/items/:id',
-      name: 'items',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/ItemView.vue'),
-    },
-  ],
+  routes
+})
+
+// --- Navigation Guard ---
+router.beforeEach(async (to, from, next) => {
+  if (currentUser.value === undefined) {
+    await new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, () => {
+        unsubscribe()
+        resolve()
+      })
+    })
+  }
+
+  const publicPages = ['/signup']
+  const authRequired = !publicPages.includes(to.path)
+
+  if (currentUser.value && to.path === '/signup') {
+    next('/profile')
+  } else if (authRequired && !currentUser.value) {
+    next('/signup')
+  } else {
+    next()
+  }
 })
 
 export default router
