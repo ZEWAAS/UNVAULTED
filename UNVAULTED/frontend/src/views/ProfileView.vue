@@ -2,20 +2,21 @@
   <div
     class="fixed top-[15vh] left-1/2 transform -translate-x-1/2 w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center shadow-md"
   >
-    <!-- PROFILE HEADER -->
-    <div class="flex flex-col md:flex-row items-center md:items-start gap-6 w-full">
+
+    <div v-if="loading" class="text-center text-gray-700">Loading...</div>
+    <div v-else class="flex flex-col md:flex-row items-center md:items-start gap-6 w-full">
       <img
-        :src="props.user.image"
-        alt="Profile Icon"
+        :src="profileImage"
+        alt="Profile Picture"
         class="profile-icon w-40 h-40 rounded-full object-cover"
       />
       <div class="flex flex-col gap-6 text-center md:text-left">
         <div>
           <p class="font-bold text-2xl tracking-widest text-gray-800 select-none">
-            {{ props.user.name }}
+            {{ user.FirstName + ' ' + user.LastName }}
           </p>
           <p class="tracking-widest text-gray-800 select-none">
-            {{ props.user.reviews.length }} Reviews
+            {{ user.Reviews.length }} Reviews
           </p>
         </div>
 
@@ -26,23 +27,22 @@
           <div class="grid grid-cols-[auto_auto] gap-1 justify-center md:justify-start">
             <img src="@/assets/location.png" class="size-5" />
             <p class="tracking-widest text-gray-800 select-none">
-              {{ props.user.street }}
+              {{ user.Street || "No data" }}
             </p>
             <img src="@/assets/follower.png" class="size-5" />
             <p class="tracking-widest text-gray-800 select-none">
-              {{ props.user.followers }} Followers
+              {{ user.Followers }} Followers
             </p>
             <img src="@/assets/verification.png" class="size-5" />
             <p class="tracking-widest text-gray-800 select-none">
-              {{ props.user.verification_status }}
+              {{ user.Verified ? "Verified" : "Not Verified" }}
             </p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TABS (unter dem Profilbild) -->
-    <div class="flex gap-8 border-b border-gray-300 pt-10 w-full">
+    <div class="flex gap-8 border-b border-gray-300 pt-10 w-full" v-if="!loading">
       <button
         @click="activeTab = 'products'"
         :class="[ 
@@ -67,13 +67,12 @@
       </button>
     </div>
 
-    <!-- TAB CONTENT -->
-    <div class="mt-6 w-full text-center md:text-left">
-      <!-- PRODUCTS TAB -->
+    <div class="mt-6 w-full text-center md:text-left" v-if="!loading">
+
       <div v-if="activeTab === 'products'">
-        <div v-if="props.user.products.length > 0" class="grid md:grid-cols-2 gap-6">
+        <div v-if="user.Items.length > 0" class="grid md:grid-cols-2 gap-6">
           <div
-            v-for="(product, index) in props.user.products"
+            v-for="(product, index) in user.Items"
             :key="index"
             class="p-4 bg-white/80 rounded-xl shadow-md hover:shadow-lg transition-shadow"
           >
@@ -85,11 +84,10 @@
         <p v-else class="text-gray-700 italic">No products yet.</p>
       </div>
 
-      <!-- REVIEWS TAB -->
       <div v-else>
-        <div v-if="props.user.reviews.length > 0" class="flex flex-col gap-4">
+        <div v-if="user.Reviews.length > 0" class="flex flex-col gap-4">
           <div
-            v-for="(review, index) in props.user.reviews"
+            v-for="(review, index) in user.Reviews"
             :key="index"
             class="bg-white/80 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow"
           >
@@ -102,52 +100,48 @@
         </div>
         <p v-else class="text-gray-700 italic">No reviews yet.</p>
       </div>
+
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { auth, db } from '@/firebase/firebase-client'
+import { doc, getDoc } from 'firebase/firestore'
+import { useRouter } from 'vue-router'
+import defaultProfile from '@/assets/defaultProfile.png'
 
-const props = defineProps({
-  user: {
-    type: Object,
-    required: true,
-    default: () => ({
-      name: 'Max Verstappen',
-      street: 'Red Bull Str. 1, 12345 Speed City',
-      followers: 33,
-      verification_status: 'Verified',
-      image:
-        'https://tse3.mm.bing.net/th/id/OIP.vcjzhWLCN7-VOC95HeBsJAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3',
-      reviews: [
-          {
-            author: 'Lewis Hamilton',
-            rating: 5,
-            comment: 'Fast delivery, top driver! Your car looks great from behind 😄'
-          },
-          {
-            author: 'Charles Leclerc',
-            rating: 4,
-            comment: 'Good race pace, but sometimes too aggressive.'
-          }
-        ],
-      products: [
-              {
-              name: 'Racing Helmet',
-              description: 'High-quality helmet for maximum safety.',
-              price: 1299.99
-              },
-              {
-              name: 'Racing Gloves',
-              description: 'Comfortable gloves for better grip.',
-              price: 79.99
-              }
-        ],
-    })
-  },
-  
-})
+const router = useRouter()
+
+const user = ref(null)
+const loading = ref(true)
 
 const activeTab = ref('reviews')
+
+const profileImage = computed(() => {
+  return user.value?.Image && user.value.Image.trim() !== ""
+    ? user.value.Image
+    : defaultProfile
+})
+
+onMounted(async () => {
+  const currentUser = auth.currentUser
+
+  if (!currentUser) {
+    router.push("/login")
+    return
+  }
+
+  const userRef = doc(db, "Users", currentUser.uid)
+  const snap = await getDoc(userRef)
+
+  if (!snap.exists()) {
+    console.error("User does not exist in Firestore")
+    return
+  }
+
+  user.value = snap.data()
+  loading.value = false
+})
 </script>
