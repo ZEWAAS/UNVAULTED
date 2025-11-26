@@ -1,6 +1,11 @@
 <template>
   <div class="h-30"></div>
-  <div class="flex flex-col gap-5">
+
+  <div v-if="isNew" class="flex flex-col w-full px-[7.5%]">
+    <ItemDetailAdd />
+  </div>
+
+  <div v-else class="flex flex-col gap-5">
     <div class="flex flex-row w-full px-[7.5%] gap-5">
       <ItemDetail
         title="Max Verstappen Suit SUIT SUIT SUIT SUIT SUIT SUIT SUITSUI TUSI TUSITU SITU SITU SITU SIUT SIUT SITU"
@@ -18,11 +23,11 @@
           'https://picsum.photos/600/400?random=6',
           'https://picsum.photos/600/400?random=4',
           'https://picsum.photos/600/400?random=5',
-
           'https://picsum.photos/600/400?random=3',
         ]"
       />
     </div>
+
     <div class="flex flex-row w-full px-[7.5%] gap-5" id="chat-section">
       <ItemChat :is-seller="false" />
     </div>
@@ -33,7 +38,11 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ItemDetail from '../components/ItemDetail.vue'
+import ItemDetailAdd from '../components/ItemAdd.vue'
 import ItemChat from '../components/ItemChat.vue'
+import { computed } from 'vue'
 
-const item = ref(null)
+const route = useRoute()
+
+const isNew = computed(() => route.path === '/items/new')
 </script>

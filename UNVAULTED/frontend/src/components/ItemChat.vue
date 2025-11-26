@@ -14,90 +14,92 @@
           <p class="text-sm text-gray-500">Chat about this item</p>
         </div>
       </div>
+      <button @click="startChat" class="w-[10rem] py-3 button-outline">Start Chat</button>
     </div>
+    <div class="transition-[height] duration-300" :style="{ height: chatOpen ? '37rem' : '0' }">
+      <div ref="chatContainer" class="h-[28rem] overflow-y-auto p-6 space-y-4 bg-gray-50">
+        <div v-if="messages.length === 0" class="flex justify-center mt-10">
+          <p class="text-gray-400 italic text-sm">Start chat by sending a message</p>
+        </div>
 
-    <div ref="chatContainer" class="h-[28rem] overflow-y-auto p-6 space-y-4 bg-gray-50">
-      <div v-if="messages.length === 0" class="flex justify-center mt-10">
-        <p class="text-gray-400 italic text-sm">Start chat by sending a message</p>
+        <div
+          v-for="(msg, index) in messages"
+          :key="index"
+          class="flex"
+          :class="{
+            'justify-end': msg.type === 'user',
+            'justify-start': msg.type === 'seller',
+            'justify-center': msg.type === 'system',
+          }"
+        >
+          <div
+            v-if="msg.type === 'system'"
+            class="text-center text-gray-400 text-xs italic px-4 py-1"
+          >
+            {{ msg.text }}
+          </div>
+
+          <div
+            v-else-if="msg.type === 'user'"
+            class="bg-blue-600 text-white px-4 py-2 rounded-2xl max-w-[60%] shadow-sm"
+          >
+            {{ msg.text }}
+          </div>
+
+          <div
+            v-else-if="msg.type === 'seller'"
+            class="bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-2xl max-w-[60%] shadow-sm"
+          >
+            {{ msg.text }}
+          </div>
+        </div>
       </div>
 
-      <div
-        v-for="(msg, index) in messages"
-        :key="index"
-        class="flex"
-        :class="{
-          'justify-end': msg.type === 'user',
-          'justify-start': msg.type === 'seller',
-          'justify-center': msg.type === 'system',
-        }"
-      >
-        <div
-          v-if="msg.type === 'system'"
-          class="text-center text-gray-400 text-xs italic px-4 py-1"
-        >
-          {{ msg.text }}
-        </div>
+      <div class="flex flex-col gap-3 p-4 bg-white border-t border-gray-200 sticky bottom-0">
+        <div class="flex flex-col md:flex-row gap-3">
+          <div class="flex items-center border border-gray-300 rounded-xl px-4 py-2 flex-1">
+            <span class="text-gray-400 mr-2">€</span>
+            <input
+              v-model="offerPrice"
+              type="number"
+              min="1"
+              class="w-full text-sm outline-none"
+              placeholder="Suggest a price"
+            />
+          </div>
 
-        <div
-          v-else-if="msg.type === 'user'"
-          class="bg-blue-600 text-white px-4 py-2 rounded-2xl max-w-[60%] shadow-sm"
-        >
-          {{ msg.text }}
-        </div>
+          <div class="flex items-center border border-gray-300 rounded-xl px-4 py-2 flex-1">
+            <input
+              v-model="offerItem"
+              type="text"
+              class="w-full text-sm outline-none"
+              placeholder="Offer one of your items"
+            />
+          </div>
 
-        <div
-          v-else-if="msg.type === 'seller'"
-          class="bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-2xl max-w-[60%] shadow-sm"
-        >
-          {{ msg.text }}
+          <button
+            @click="sendOffer"
+            class="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
+          >
+            Send Offer
+          </button>
         </div>
       </div>
-    </div>
-
-    <div class="flex flex-col gap-3 p-4 bg-white border-t border-gray-200 sticky bottom-0">
-      <div class="flex flex-col md:flex-row gap-3">
-        <div class="flex items-center border border-gray-300 rounded-xl px-4 py-2 flex-1">
-          <span class="text-gray-400 mr-2">€</span>
-          <input
-            v-model="offerPrice"
-            type="number"
-            min="1"
-            class="w-full text-sm outline-none"
-            placeholder="Suggest a price"
-          />
-        </div>
-
-        <div class="flex items-center border border-gray-300 rounded-xl px-4 py-2 flex-1">
-          <input
-            v-model="offerItem"
-            type="text"
-            class="w-full text-sm outline-none"
-            placeholder="Offer one of your items"
-          />
-        </div>
-
+      <div class="border-t border-gray-200 bg-white p-4 flex items-center gap-3 sticky bottom-0">
+        <input
+          v-model="newMessage"
+          @keyup.enter="sendMessage"
+          type="text"
+          placeholder="Type a message..."
+          class="flex-1 bg-gray-100 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-400 transition"
+        />
         <button
-          @click="sendOffer"
-          class="bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
+          @click="sendMessage"
+          class="bg-blue-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
         >
-          Send Offer
+          Send
         </button>
       </div>
-    </div>
-    <div class="border-t border-gray-200 bg-white p-4 flex items-center gap-3 sticky bottom-0">
-      <input
-        v-model="newMessage"
-        @keyup.enter="sendMessage"
-        type="text"
-        placeholder="Type a message..."
-        class="flex-1 bg-gray-100 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-400 transition"
-      />
-      <button
-        @click="sendMessage"
-        class="bg-blue-600 text-white px-4 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
-      >
-        Send
-      </button>
     </div>
   </div>
 </template>
@@ -121,6 +123,12 @@ const props = defineProps({
 const messages = ref([])
 const newMessage = ref('')
 const chatContainer = ref(null)
+const chatOpen = ref(false)
+
+function startChat() {
+  chatOpen.value = !chatOpen.value
+
+}
 
 function sendMessage() {
   const text = newMessage.value.trim()

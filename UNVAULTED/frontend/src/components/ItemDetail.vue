@@ -85,7 +85,7 @@
           <button
             v-if="allowBuy"
             @click="buyItem"
-            class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold text-lg hover:bg-blue-700 transition shadow"
+            class="flex-1 button-solid py-3"
           >
             Make Offer
           </button>
@@ -93,7 +93,7 @@
           <button
             v-if="allowTrade"
             @click="tradeItem"
-            class="flex-1 border-2 border-blue-600 text-blue-600 py-3 rounded-xl font-semibold text-lg hover:bg-blue-50 transition"
+            class="flex-1 button-outline py-3"
           >
             Trade Item
           </button>
