@@ -2,9 +2,7 @@
   <div class="w-full mx-auto p-6 bg-white rounded-2xl border border-gray-200 flex flex-col gap-10">
     <h1 class="text-4xl font-extrabold text-gray-900">Add New Item</h1>
 
-    <!-- IMAGE UPLOAD -->
     <div class="flex flex-col md:flex-row gap-8">
-      <!-- Image Upload Input -->
       <div class="flex flex-col md:w-1/3 gap-3">
         <label class="text-gray-700 font-semibold">Upload Images</label>
 
@@ -21,7 +19,6 @@
         </p>
       </div>
 
-      <!-- Image Preview -->
       <div class="flex flex-row md:w-2/3 gap-4 overflow-x-auto">
         <div
           v-for="(img, i) in previewImages"
@@ -48,7 +45,6 @@
     </div>
 
     <div class="flex flex-col gap-8">
-      <!-- ITEM TITLE -->
       <div>
         <label class="text-gray-700 font-semibold">Item Title</label>
         <input
@@ -122,6 +118,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { addDoc, doc, setDoc, updateDoc, collection } from 'firebase/firestore'
+import { auth, db } from '@/firebase/firebase-client'
 
 const item = ref({
   title: '',
@@ -175,13 +173,26 @@ const type = computed(() => {
   return 'Trade'
 })
 
-function saveItem() {
+async function saveItem() {
   const payload = {
     ...item.value,
     images: previewImages.value,
   }
 
-  console.log('Saving item:', payload)
+  const currentUser = auth.currentUser
+  const userRef = doc(db, 'Users', currentUser.uid)
+  console.log('Saving item:', payload, data.Seller.path)
+
+  await addDoc(collection(db, 'Items'), {
+    Likes: 0,
+    Price: payload.price,
+    SellType: payload.sell && payload.trade ? 2 : payload.sell ? 0 : 1,
+    Seller: userRef, // reference ✔
+    Title: payload.title,
+    Description: payload.description,
+    available: true,
+    createdAt: new Date(),
+  })
 }
 
 function cancel() {
