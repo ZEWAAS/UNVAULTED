@@ -2,9 +2,7 @@
   <div class="w-full mx-auto p-6 bg-white rounded-2xl border border-gray-200 flex flex-col gap-10">
     <h1 class="text-4xl font-extrabold text-gray-900">Add New Item</h1>
 
-    <!-- IMAGE UPLOAD -->
     <div class="flex flex-col md:flex-row gap-8">
-      <!-- Image Upload Input -->
       <div class="flex flex-col md:w-1/3 gap-3">
         <label class="text-gray-700 font-semibold">Upload Images</label>
 
@@ -21,7 +19,6 @@
         </p>
       </div>
 
-      <!-- Image Preview -->
       <div class="flex flex-row md:w-2/3 gap-4 overflow-x-auto">
         <div
           v-for="(img, i) in previewImages"
@@ -48,7 +45,6 @@
     </div>
 
     <div class="flex flex-col gap-8">
-      <!-- ITEM TITLE -->
       <div>
         <label class="text-gray-700 font-semibold">Item Title</label>
         <input
@@ -110,10 +106,13 @@
           </button>
         </div>
       </div>
+      <p v-if="errorMessage" class="text-red-500 font-semibold">{{ errorMessage }}</p>
+      <p v-if="successMessage" class="text-green-600 font-semibold">{{ successMessage }}</p>
 
       <div class="flex gap-4 mt-6">
-        <button @click="saveItem" class="flex-1 button-solid py-3">Save Item</button>
-
+        <button @click="saveItem" :disabled="loading" class="flex-1 button-solid py-3">
+          {{ loading ? 'Saving...' : 'Save Item' }}
+        </button>
         <button @click="cancel" class="flex-1 button-outline py-3">Cancel</button>
       </div>
     </div>
@@ -122,6 +121,18 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { addDoc, doc, collection } from 'firebase/firestore'
+import { auth, db } from '@/firebase/firebase-client'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+// ------------------------
+// STATE
+// ------------------------
+const loading = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
 
 const item = ref({
   title: '',
@@ -129,11 +140,13 @@ const item = ref({
   price: null,
   sell: true,
   trade: false,
-  sellType: 0, // "sell" | "trade" | "both"
 })
 
 const previewImages = ref([])
 
+// ------------------------
+// IMAGE HANDLING
+// ------------------------
 function handleImageUpload(e) {
   const files = Array.from(e.target.files)
   files.forEach((file) => {
@@ -149,13 +162,15 @@ function removeImage(index) {
   previewImages.value.splice(index, 1)
 }
 
+// ------------------------
+// TOGGLES
+// ------------------------
 function toggleSell() {
   if (!item.value.sell && !item.value.trade) {
     item.value.sell = true
     return
   }
   item.value.sell = !item.value.sell
-
   if (!item.value.sell && !item.value.trade) item.value.trade = true
 }
 
@@ -165,7 +180,6 @@ function toggleTrade() {
     return
   }
   item.value.trade = !item.value.trade
-
   if (!item.value.sell && !item.value.trade) item.value.sell = true
 }
 
@@ -175,16 +189,61 @@ const type = computed(() => {
   return 'Trade'
 })
 
-function saveItem() {
-  const payload = {
-    ...item.value,
-    images: previewImages.value,
+// ------------------------
+// SAVE ITEM
+// ------------------------
+async function saveItem() {
+  errorMessage.value = ''
+  successMessage.value = ''
+
+  // VALIDATION
+  if (!item.value.title.trim()) {
+    errorMessage.value = 'Name cannot be empty.'
+    return
   }
 
-  console.log('Saving item:', payload)
+  if (!item.value.description.trim()) {
+    errorMessage.value = 'Description cannot be empty.'
+    return
+  }
+
+  if (item.value.sell && (!item.value.price || item.value.price <= 0)) {
+    errorMessage.value = 'Price must be greater than 0.'
+    return
+  }
+
+  loading.value = true
+
+  try {
+    const currentUser = auth.currentUser
+    const userRef = doc(db, 'Users', currentUser.uid)
+
+    const docRef = await addDoc(collection(db, 'Items'), {
+      Likes: 0,
+      Price: item.value.price,
+      SellType: item.value.sell && item.value.trade ? 2 : item.value.sell ? 0 : 1,
+      Seller: userRef,
+      Title: item.value.title,
+      Description: item.value.description,
+      available: true,
+      createdAt: new Date(),
+    })
+
+    successMessage.value = 'Item successfully added!'
+
+    // Redirect to user profile after short delay
+    setTimeout(() => {
+      router.push(`/profile`)
+    }, 800)
+  } catch (error) {
+    console.error(error)
+    errorMessage.value = 'Could not save item. Please try again.'
+  }
+
+  loading.value = false
 }
 
 function cancel() {
-  alert('Cancelled')
+  router.back()
 }
 </script>
