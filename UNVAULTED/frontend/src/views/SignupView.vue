@@ -179,7 +179,6 @@ async function handleLogin() {
     }
 
     await updateDoc(doc(db, 'Users', userCred.user.uid), { Verified: true })
-
     router.push('/profile')
   } catch (err) {
     loginErrors.value.general = 'Invalid login credentials'
@@ -190,17 +189,34 @@ async function handleLogin() {
 async function handleSignup() {
   signupErrors.value = {}
 
+  const pwd = formSignup.value.password
+  const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/
+
   if (!formSignup.value.firstname) signupErrors.value.firstname = 'First name required'
   if (!formSignup.value.lastname) signupErrors.value.lastname = 'Last name required'
   if (!formSignup.value.email) signupErrors.value.email = 'Email required'
-  if (!formSignup.value.password) signupErrors.value.password = 'Password required'
+
+  if (!pwd) {
+    signupErrors.value.password = 'Password required'
+  } else if (pwd.length < 8) {
+    signupErrors.value.password = 'Password must be at least 8 characters long'
+  } else if (!/[A-Z]/.test(pwd)) {
+    signupErrors.value.password = 'Password must contain at least one uppercase letter'
+  } else {
+    const middlePart = pwd.slice(1, -1)
+    if (!specialCharRegex.test(middlePart)) {
+      signupErrors.value.password =
+        'Password must contain at least one special character (not as the first or last character)'
+    }
+  }
+
   if (Object.keys(signupErrors.value).length > 0) return
 
   try {
     const userCred = await createUserWithEmailAndPassword(
       auth,
       formSignup.value.email,
-      formSignup.value.password,
+      pwd,
     )
 
     await sendEmailVerification(userCred.user)
