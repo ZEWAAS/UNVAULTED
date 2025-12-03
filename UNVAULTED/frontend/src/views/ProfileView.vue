@@ -5,7 +5,7 @@
     <div class="absolute top-4 right-6">
       <button
         @click="toggleEdit"
-        class="px-4 py-1 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700"
+        class="px-4 py-1 bg-gray-700 text-white rounded-xl shadow-md hover:bg-blue-700 cursor-pointer transition"
       >
         {{ editMode ? 'Save' : 'Edit Profile' }}
       </button>
@@ -140,7 +140,6 @@ const activeTab = ref('reviews')
 const profileImage = computed(() => {
   return user.value?.Image && user.value.Image.trim() !== '' ? user.value.Image : defaultProfile
 })
-
 
 const toggleEdit = async () => {
   if (!editMode.value) {
