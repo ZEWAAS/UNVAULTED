@@ -129,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, h } from 'vue'
+import { ref, onMounted, onBeforeUnmount, h, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth, db } from '@/firebase/firebase-client.js'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
@@ -268,10 +268,14 @@ const LogoutIcon = (props: any) =>
     ],
   )
 
-const items = [
+const items = computed(() => [
   { label: 'History', to: '/', icon: HistoryIcon },
   { label: 'Your Offers', to: '/', icon: OffersIcon },
-  { label: 'Your Profile', to: '/profile', icon: ProfileIcon },
+  {
+    label: 'Your Profile',
+    to: currentUser.value ? `/profile/${currentUser.value.uid}` : '/profile',
+    icon: ProfileIcon,
+  },
   { label: 'Settings', to: '/', icon: SettingsIcon },
-]
+])
 </script>
