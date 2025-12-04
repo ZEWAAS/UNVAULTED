@@ -99,7 +99,7 @@
               :title="item.Title"
               :price="item.Price"
               :image="item.Images?.[0] || ''"
-              :sellerName="user.FirstName + ' ' + user.LastName"
+              :seller="item.Seller"
               :likeCount="item.Likes"
               :sellType="
                 item.SellType === 0 ? 'Sell' : item.SellType === 1 ? 'Trade' : 'Sell/Trade'

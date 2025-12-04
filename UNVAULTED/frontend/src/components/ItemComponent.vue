@@ -14,9 +14,9 @@
         <div
           class="seller group absolute flex flex-row items-center gap-1 bottom-2 left-2 border border-[var(--color-border)]/40 rounded-full p-[1px] hover:pr-2 w-fit max-w-30 text-xs text-white backdrop-blur-md bg-black/20"
         >
-          <img :src="sellerImage" class="h-8 w-8 rounded-full aspect-square" />
+          <img :src="userImage" class="h-8 w-8 rounded-full aspect-square" />
           <p class="hidden group-hover:block text-gray-100 text-xs truncate">
-            {{ sellerName }}
+            {{ userName }}
           </p>
         </div>
 
@@ -62,7 +62,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { ref, onMounted } from 'vue'
-
+import { doc, getDoc } from 'firebase/firestore'
 const router = useRouter()
 
 const props = defineProps({
@@ -81,10 +81,31 @@ const props = defineProps({
     default:
       'https://tse3.mm.bing.net/th/id/OIP.vcjzhWLCN7-VOC95HeBsJAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3',
   },
-  sellerName: { type: String, required: true, default: 'Username' },
+  seller: { type: Object, required: true },
   likeCount: { type: Number, required: true, default: 0 },
   isLiked: { type: Boolean, required: true, default: true },
   distance: { type: Number, required: true, default: 0 },
+})
+
+const userName = ref('Username')
+const userImage = ref('')
+
+onMounted(async () => {
+  if (props.seller) {
+    try {
+      const snap = await getDoc(props.seller)
+      if (snap.exists()) {
+        const data = snap.data()
+        userName.value = `${data.FirstName} ${data.LastName}`
+        userImage.value = data.Image || '../assets/defaultProfile.jpg'
+      } else {
+        userName.value = 'Unknown'
+      }
+    } catch (e) {
+      console.error('Failed to load user:', e)
+      userName.value = 'Unknown'
+    }
+  }
 })
 
 function goToItemPage() {
