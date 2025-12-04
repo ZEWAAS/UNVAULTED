@@ -15,17 +15,16 @@ onAuthStateChanged(auth, (user) => {
 const routes = [
   { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
   { path: '/about', name: 'about', component: () => import('../views/ProfileView.vue') },
-  { path: '/profile', name: 'profile', component: () => import('../views/ProfileView.vue') },
+  { path: '/profile/:id', name: 'profile', component: () => import('../views/ProfileView.vue') },
   { path: '/signup', name: 'signup', component: () => import('../views/SignupView.vue') },
   { path: '/items/:id', name: 'items', component: () => import('../views/ItemView.vue') },
 ]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes
+  routes,
 })
 
-// --- Navigation Guard ---
 router.beforeEach(async (to, from, next) => {
   if (currentUser.value === undefined) {
     await new Promise((resolve) => {
