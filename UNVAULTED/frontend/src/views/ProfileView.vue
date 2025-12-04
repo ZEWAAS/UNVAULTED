@@ -166,11 +166,8 @@
   </div>
 </template>
 <script setup>
-import ItemComponent from '../components/ItemComponent.vue'
-import ReviewComponent from '@/components/ReviewComponent.vue'
-import defaultProfile from '@/assets/defaultProfile.jpg'
-
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { auth, db } from '@/firebase/firebase-client'
 import {
   doc,
@@ -181,9 +178,13 @@ import {
   where,
   getDocs,
   Timestamp,
+  arrayUnion,
 } from 'firebase/firestore'
 
-import { useRouter, useRoute } from 'vue-router'
+import ItemComponent from '../components/ItemComponent.vue'
+import ReviewComponent from '@/components/ReviewComponent.vue'
+import defaultProfile from '@/assets/defaultProfile.jpg'
+
 const router = useRouter()
 const route = useRoute()
 
@@ -210,6 +211,48 @@ const profileImage = computed(() => {
   return user.value?.Image && user.value.Image.trim() !== '' ? user.value.Image : defaultProfile
 })
 
+// Load user profile and items
+const loadProfile = async () => {
+  loading.value = true
+  const currentUser = auth.currentUser
+  if (!currentUser) {
+    router.push('/login')
+    return
+  }
+
+  loggedInUid.value = currentUser.uid
+  profileUid.value = route.params.id || currentUser.uid
+
+  const profileRef = doc(db, 'Users', profileUid.value)
+  const snap = await getDoc(profileRef)
+
+  if (!snap.exists()) {
+    console.error('User does not exist')
+    loading.value = false
+    return
+  }
+
+  user.value = snap.data()
+  user.value.id = profileUid.value
+
+  // Fetch items
+  const itemsRef = collection(db, 'Items')
+  const q = query(itemsRef, where('Seller', '==', profileRef))
+  const itemSnap = await getDocs(q)
+  items.value = itemSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+
+  // Average rating
+  if (user.value.Reviews && user.value.Reviews.length > 0) {
+    const totalRating = user.value.Reviews.reduce((sum, review) => sum + review.Rating, 0)
+    rating.value = Math.round(totalRating / user.value.Reviews.length)
+  } else {
+    rating.value = 0
+  }
+
+  loading.value = false
+}
+
+// Toggle edit mode for own profile
 const toggleEdit = async () => {
   if (!isOwnProfile.value) return
 
@@ -231,6 +274,7 @@ const toggleEdit = async () => {
   editMode.value = false
 }
 
+// Add a new review to another user's profile
 const addReview = async () => {
   if (!profileUid.value || !loggedInUid.value) return
   if (isOwnProfile.value) return
@@ -250,7 +294,7 @@ const addReview = async () => {
   }
 
   await updateDoc(profileRef, {
-    Reviews: [...user.value.Reviews, newEntry],
+    Reviews: arrayUnion(newEntry),
   })
 
   user.value.Reviews.push(newEntry)
@@ -258,44 +302,17 @@ const addReview = async () => {
   newReviewRating.value = 0
 }
 
-onMounted(async () => {
-  const currentUser = auth.currentUser
-  if (!currentUser) {
-    router.push('/login')
-    return
-  }
+onMounted(loadProfile)
 
-  loggedInUid.value = currentUser.uid
-  profileUid.value = route.params.id || currentUser.uid
-
-  const profileRef = doc(db, 'Users', profileUid.value)
-  const snap = await getDoc(profileRef)
-
-  if (!snap.exists()) {
-    console.error('User does not exist')
-    return
-  }
-
-  user.value = snap.data()
-
-  const itemsRef = collection(db, 'Items')
-  const q = query(itemsRef, where('Seller', '==', profileRef))
-  const itemSnap = await getDocs(q)
-
-  items.value = itemSnap.docs.map((d) => ({
-    id: d.id,
-    ...d.data(),
-  }))
-  // Average rating
-  if (user.value.Reviews && user.value.Reviews.length > 0) {
-    const totalRating = user.value.Reviews.reduce((sum, review) => sum + review.Rating, 0)
-    rating.value = Math.round(totalRating / user.value.Reviews.length)
-  } else {
-    rating.value = 0
-  }
-
-  loading.value = false
-})
+// Watch route param to reload profile when navigating to other profile
+watch(
+  () => route.params.id,
+  async (newId, oldId) => {
+    if (newId !== oldId) {
+      await loadProfile()
+    }
+  },
+)
 </script>
 
 <style scoped>

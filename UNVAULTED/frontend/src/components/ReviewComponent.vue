@@ -1,52 +1,48 @@
 <template>
   <div class="border border-[var(--color-border)] rounded-xl p-2">
-    <div class="flex items-center justify-between gap-3 px-1 py-1 pr-8">
-      <div class="flex items-center gap-3">
-        <img :src="userImage" class="w-14 h-14 rounded-full object-cover" />
-        <div class="w-100 flex flex-col justify-between h-14">
-          <div class="flex items-center justify-between w-full">
-            <p class="font-semibold text-2xl text-gray-900">{{ userName }}</p>
-
-            <p class="text-gray-600 text-sm">
-              {{
-                createdAt
-                  ? createdAt.toDate().toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })
-                  : ''
-              }}
-            </p>
-          </div>
-
-          <div class="flex">
-            <span
-              v-for="n in 5"
-              :key="n"
-              class="text-xl"
-              :class="n <= rating ? 'text-yellow-500' : 'text-gray-300'"
-            >
-              ★
-            </span>
-          </div>
+    <div class="flex items-center gap-3 cursor-pointer" @click="goToProfile">
+      <img :src="userImage" class="w-14 h-14 rounded-full object-cover" />
+      <div class="flex flex-col justify-between h-14 w-full">
+        <div class="flex items-center justify-between w-full">
+          <p class="font-semibold text-2xl text-gray-900">{{ userName }}</p>
+          <p class="text-gray-600 text-sm">
+            {{
+              createdAt
+                ? createdAt.toDate().toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })
+                : ''
+            }}
+          </p>
+        </div>
+        <div class="flex">
+          <span
+            v-for="n in 5"
+            :key="n"
+            class="text-xl"
+            :class="n <= rating ? 'text-yellow-500' : 'text-gray-300'"
+          >
+            ★
+          </span>
         </div>
       </div>
     </div>
 
-    <p class="text-gray-700 whitespace-pre-line px-4 py-2">
-      {{ text }}
-    </p>
+    <p class="text-gray-700 whitespace-pre-line px-4 py-2">{{ text }}</p>
   </div>
 </template>
 
 <script setup>
-import { Timestamp } from 'firebase/firestore'
 import { ref, onMounted } from 'vue'
-import { doc, getDoc } from 'firebase/firestore'
+import { useRouter } from 'vue-router'
+import { getDoc } from 'firebase/firestore'
+import defaultProfile from '@/assets/defaultProfile.jpg'
+
 const props = defineProps({
   user: {
-    type: Object, // Firestore DocumentReference
+    type: Object,
     required: true,
   },
   rating: {
@@ -59,14 +55,15 @@ const props = defineProps({
     required: true,
   },
   createdAt: {
-    type: Timestamp,
+    type: Object,
     required: false,
     default: '',
   },
 })
 
-const userName = ref('Username')
-const userImage = ref('')
+const router = useRouter()
+const userName = ref('Loading Username')
+const userImage = ref(defaultProfile)
 
 onMounted(async () => {
   if (props.user) {
@@ -75,7 +72,7 @@ onMounted(async () => {
       if (snap.exists()) {
         const data = snap.data()
         userName.value = `${data.FirstName} ${data.LastName}`
-        userImage.value = data.Image || '../assets/defaultProfile.jpg'
+        userImage.value = data.Image || defaultProfile
       } else {
         userName.value = 'Unknown'
       }
@@ -85,6 +82,12 @@ onMounted(async () => {
     }
   }
 })
+
+const goToProfile = () => {
+  if (!props.user) return
+  const userId = props.user.id
+  router.push(`/profile/${userId}`)
+}
 </script>
 
 <style scoped></style>
