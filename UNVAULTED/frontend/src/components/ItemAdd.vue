@@ -97,13 +97,36 @@
               />
             </div>
           </div>
-          <button
+          
+          <div class="flex-1 rounded-xl" :class="item.trade ? 'border border-gray-300' : ''">
+            <button
             @click="toggleTrade"
             :class="item.trade ? 'button-solid' : 'button-outline'"
-            class="flex-1 py-2"
+            class="flex-1 w-full py-2"
           >
             Trade
           </button>
+
+            <div
+              class="transition-all overflow-hidden px-2 py-2"
+              :style="{
+                height: item.trade ? '84px' : '0px',
+                padding: item.trade ? '8px' : '0px 8px',
+                opacity: item.trade ? '1' : '0',
+              }"
+            >
+              <label class="text-gray-700 font-semibold">Value (€)</label>
+              <input
+                v-model="item.value"
+                type="number"
+                min="0"
+                :disabled="!item.trade"
+                class="w-full border border-gray-300 rounded-xl px-3 py-2 mt-1 transition disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                placeholder="Enter approx. value"
+              />
+            </div>
+          </div>
+          
         </div>
       </div>
       <p v-if="errorMessage" class="text-red-500 font-semibold">{{ errorMessage }}</p>
@@ -125,7 +148,10 @@ import { addDoc, doc, collection } from 'firebase/firestore'
 import { auth, db } from '@/firebase/firebase-client'
 import { useRouter } from 'vue-router'
 
+import { uploadMultipleFiles } from '@/scripts/cloudinary'
+
 const router = useRouter()
+
 
 // ------------------------
 // STATE
@@ -138,18 +164,23 @@ const item = ref({
   title: '',
   description: '',
   price: null,
+  value: null,
   sell: true,
   trade: false,
 })
 
 const previewImages = ref([])
+const rawFiles = ref([])
 
 // ------------------------
 // IMAGE HANDLING
 // ------------------------
 function handleImageUpload(e) {
   const files = Array.from(e.target.files)
+  
   files.forEach((file) => {
+    rawFiles.value.push(file)
+
     const reader = new FileReader()
     reader.onload = (ev) => {
       previewImages.value.push(ev.target.result)
@@ -160,6 +191,7 @@ function handleImageUpload(e) {
 
 function removeImage(index) {
   previewImages.value.splice(index, 1)
+  rawFiles.value.splice(index, 1)
 }
 
 // ------------------------
@@ -212,15 +244,25 @@ async function saveItem() {
     return
   }
 
+  if (rawFiles.value.length === 0) {
+    errorMessage.value = 'Please upload at least one image.'
+    return
+  }
+
   loading.value = true
 
   try {
     const currentUser = auth.currentUser
     const userRef = doc(db, 'Users', currentUser.uid)
 
+    const images = await uploadMultipleFiles(rawFiles.value, "items")
+
     const docRef = await addDoc(collection(db, 'Items'), {
       Likes: 0,
       Price: item.value.price,
+      Value: item.value.value,
+      Cover: images[0],
+      Images: images,
       SellType: item.value.sell && item.value.trade ? 2 : item.value.sell ? 0 : 1,
       Seller: userRef,
       Title: item.value.title,
