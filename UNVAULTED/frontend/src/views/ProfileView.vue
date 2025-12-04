@@ -151,6 +151,10 @@
             </div>
           </div>
 
+          <p v-if="user.Reviews.length === 0" class="text-gray-700 italic">
+            No reviews yet.
+          </p>
+
           <ReviewComponent
             v-for="(review, index) in user.Reviews"
             :key="index"
