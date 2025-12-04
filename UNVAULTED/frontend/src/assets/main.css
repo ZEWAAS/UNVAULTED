@@ -13,26 +13,28 @@
 
 
 .button-outline {
-  @apply border-2 border-blue-600 text-blue-600 rounded-xl font-semibold text-lg transition-all duration-150;
-  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.3);
+  @apply text-[var(--color-gold)] rounded-xl font-semibold text-lg transition-all duration-150 border-2;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gold) 30%, transparent);
 }
 
 .button-outline:hover {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-    transform: scale(calc((100% + 2px) / 100%));
-
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-gold) 30%, transparent);
+  transform: scale(calc((100% + 2px) / 100%));
 }
 
 .button-solid {
-  @apply border-2 border-blue-600 bg-blue-600 text-white rounded-xl font-semibold text-lg transition-all duration-150;
-  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  @apply text-white rounded-xl font-semibold text-lg transition-all duration-150 border-2;
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gold) 40%, transparent);
 }
 
 .button-solid:hover {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
-    transform: scale(calc((100% + 2px) / 100%));
-
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-gold) 40%, transparent);
+  transform: scale(calc((100% + 2px) / 100%));
 }
+
 a,
 .green {
   text-decoration: none;

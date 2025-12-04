@@ -3,10 +3,7 @@
     class="fixed top-[15vh] left-1/2 transform -translate-x-1/2 w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center shadow-md"
   >
     <div class="absolute top-4 right-6">
-      <button
-        @click="toggleEdit"
-        class="px-4 py-1 bg-gray-700 text-white rounded-xl shadow-md hover:bg-blue-700 cursor-pointer transition"
-      >
+      <button @click="toggleEdit" class="px-4 py-1 button-solid">
         {{ editMode ? 'Save' : 'Edit Profile' }}
       </button>
     </div>
@@ -20,7 +17,6 @@
       <div class="flex flex-col gap-6 text-center md:text-left">
         <div>
           <div class="font-bold text-2xl tracking-widest text-gray-800">
-            <!-- Editing mode -->
             <div v-if="editMode" class="flex gap-2">
               <input
                 v-model="editFirstName"
@@ -33,12 +29,21 @@
                 placeholder="Last Name"
               />
             </div>
-
-            <!-- Normal mode -->
             <p v-else class="select-none">{{ user.FirstName }} {{ user.LastName }}</p>
           </div>
-
-          <p class="tracking-widest text-gray-800 select-none">{{ user.Reviews.length }} Reviews</p>
+          <div class="flex gap-1">
+            <span
+              v-for="n in 5"
+              :key="n"
+              class="text-2xl"
+              :class="n <= rating ? 'text-yellow-400' : 'text-gray-300'"
+            >
+              ★
+            </span>
+          </div>
+          <p class="tracking-widest text-gray-800 text-sm select-none">
+            {{ user.Reviews.length }} {{ user.Reviews.length == 1 ? 'Review' : 'Reviews' }}
+          </p>
         </div>
 
         <div class="flex flex-col gap-2">
@@ -86,103 +91,237 @@
 
     <div class="mt-6 w-full text-center md:text-left" v-if="!loading">
       <div v-if="activeTab === 'products'">
-        <div v-if="user.Items.length > 0" class="grid md:grid-cols-2 gap-6">
-          <div
-            v-for="(product, index) in user.Items"
-            :key="index"
-            class="p-4 bg-white/80 rounded-xl shadow-md hover:shadow-lg transition-shadow"
-          >
-            <p class="font-semibold text-lg text-gray-800">{{ product.name }}</p>
-            <p class="text-gray-600">{{ product.description }}</p>
-            <p class="text-sm text-gray-500 mt-1">Price: {{ product.price }} €</p>
+        <div v-if="items.length > 0" class="w-full overflow-x-auto whitespace-nowrap py-4">
+          <div class="flex gap-4">
+            <ItemComponent
+              v-for="item in items"
+              :key="item.id"
+              :title="item.Title"
+              :price="item.Price"
+              :image="item.Images?.[0] || ''"
+              :sellerName="user.FirstName + ' ' + user.LastName"
+              :likeCount="item.Likes"
+              :sellType="
+                item.SellType === 0 ? 'Sell' : item.SellType === 1 ? 'Trade' : 'Sell/Trade'
+              "
+              :is-liked="false"
+              class="shrink-0"
+            />
           </div>
         </div>
+
         <p v-else class="text-gray-700 italic">No products yet.</p>
       </div>
 
       <div v-else>
-        <div v-if="user.Reviews.length > 0" class="flex flex-col gap-4">
+        <div class="reviews-wrapper py-4 h-fit">
           <div
+            v-if="!isOwnProfile"
+            class="review-card leave-review hover:scale-101 hover:shadow-lg transition duration-200 cursor-pointer"
+          >
+            <div class="pb-2 w-full">
+              <h1
+                class="font-semibold text-2xl pl-[1rem] py-3 text-gray-800 pb-2 border-b border-[var(--color-border)]"
+              >
+                Leave a Review
+              </h1>
+            </div>
+            <div class="p-[1rem]">
+              <textarea
+                v-model="newReviewText"
+                placeholder="Write your review..."
+                class="border rounded-lg p-2 w-full text-gray-700"
+                rows="3"
+              ></textarea>
+
+              <div class="flex gap-1 items-center my-2 pb-1">
+                <p class="pr-2">Rating:</p>
+                <span
+                  v-for="n in 5"
+                  :key="n"
+                  @click="newReviewRating = n"
+                  class="text-2xl cursor-pointer transition"
+                  :class="n <= newReviewRating ? 'text-yellow-400' : 'text-gray-300'"
+                >
+                  ★
+                </span>
+              </div>
+
+              <button @click="addReview" class="py-2 button-solid w-full">Submit Review</button>
+            </div>
+          </div>
+
+          <ReviewComponent
             v-for="(review, index) in user.Reviews"
             :key="index"
-            class="bg-white/80 rounded-xl p-4 shadow-md hover:shadow-lg transition-shadow"
-          >
-            <div class="flex justify-between items-center mb-2">
-              <p class="font-semibold text-gray-800">{{ review.author }}</p>
-              <p class="text-yellow-500">{{ '★'.repeat(review.rating) }}</p>
-            </div>
-            <p class="text-gray-700">{{ review.comment }}</p>
-          </div>
+            :text="review.Text"
+            :rating="review.Rating"
+            :user="review.User"
+            :createdAt="review.createdAt"
+            class="review-card hover:scale-104 hover:shadow-lg transition duration-200 cursor-pointer"
+          />
         </div>
-        <p v-else class="text-gray-700 italic">No reviews yet.</p>
       </div>
     </div>
   </div>
 </template>
-
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { auth, db } from '@/firebase/firebase-client'
-import { doc, getDoc, updateDoc } from 'firebase/firestore'
-import { useRouter } from 'vue-router'
+import ItemComponent from '../components/ItemComponent.vue'
+import ReviewComponent from '@/components/ReviewComponent.vue'
 import defaultProfile from '@/assets/defaultProfile.png'
 
+import { ref, onMounted, computed } from 'vue'
+import { auth, db } from '@/firebase/firebase-client'
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  Timestamp,
+} from 'firebase/firestore'
+
+import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
+const route = useRoute()
 
 const user = ref(null)
+const items = ref([])
+const loading = ref(true)
 const editMode = ref(false)
+
 const editFirstName = ref('')
 const editLastName = ref('')
-const loading = ref(true)
 
-const activeTab = ref('reviews')
+const rating = ref(0)
+const activeTab = ref('products')
+
+const newReviewRating = ref(0)
+const newReviewText = ref('')
+
+const loggedInUid = ref(null)
+const profileUid = ref(null)
+
+const isOwnProfile = computed(() => loggedInUid.value === profileUid.value)
 
 const profileImage = computed(() => {
   return user.value?.Image && user.value.Image.trim() !== '' ? user.value.Image : defaultProfile
 })
 
 const toggleEdit = async () => {
+  if (!isOwnProfile.value) return
+
   if (!editMode.value) {
-    // Enter edit mode → copy current names into inputs
     editFirstName.value = user.value.FirstName
     editLastName.value = user.value.LastName
     editMode.value = true
     return
   }
 
-  // Save mode
-  const currentUser = auth.currentUser
-  const userRef = doc(db, 'Users', currentUser.uid)
-
+  const userRef = doc(db, 'Users', loggedInUid.value)
   await updateDoc(userRef, {
     FirstName: editFirstName.value,
     LastName: editLastName.value,
   })
 
-  // Update local data instantly:
   user.value.FirstName = editFirstName.value
   user.value.LastName = editLastName.value
-
   editMode.value = false
+}
+
+const addReview = async () => {
+  if (!profileUid.value || !loggedInUid.value) return
+  if (isOwnProfile.value) return
+
+  if (newReviewText.value.trim() === '' || newReviewRating.value === 0) {
+    alert('Please enter text and select a rating.')
+    return
+  }
+
+  const profileRef = doc(db, 'Users', profileUid.value)
+
+  const newEntry = {
+    Text: newReviewText.value,
+    Rating: newReviewRating.value,
+    User: doc(db, 'Users', loggedInUid.value),
+    createdAt: Timestamp.now(),
+  }
+
+  await updateDoc(profileRef, {
+    Reviews: [...user.value.Reviews, newEntry],
+  })
+
+  user.value.Reviews.push(newEntry)
+  newReviewText.value = ''
+  newReviewRating.value = 0
 }
 
 onMounted(async () => {
   const currentUser = auth.currentUser
-
   if (!currentUser) {
     router.push('/login')
     return
   }
 
-  const userRef = doc(db, 'Users', currentUser.uid)
-  const snap = await getDoc(userRef)
+  loggedInUid.value = currentUser.uid
+  profileUid.value = route.params.id || currentUser.uid
+
+  const profileRef = doc(db, 'Users', profileUid.value)
+  const snap = await getDoc(profileRef)
 
   if (!snap.exists()) {
-    console.error('User does not exist in Firestore')
+    console.error('User does not exist')
     return
   }
 
   user.value = snap.data()
+
+  const itemsRef = collection(db, 'Items')
+  const q = query(itemsRef, where('Seller', '==', profileRef))
+  const itemSnap = await getDocs(q)
+
+  items.value = itemSnap.docs.map((d) => ({
+    id: d.id,
+    ...d.data(),
+  }))
+  // Average rating
+  if (user.value.Reviews && user.value.Reviews.length > 0) {
+    const totalRating = user.value.Reviews.reduce((sum, review) => sum + review.Rating, 0)
+    rating.value = Math.round(totalRating / user.value.Reviews.length)
+  } else {
+    rating.value = 0
+  }
+
   loading.value = false
 })
 </script>
+
+<style scoped>
+.reviews-wrapper {
+  column-count: 3;
+  column-gap: 1rem;
+  padding-right: 10px;
+}
+
+.review-card {
+  break-inside: avoid;
+  margin-bottom: 1rem;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  display: inline-block;
+  width: 100%;
+}
+
+.leave-review {
+  background: white;
+  border: 1px solid var(--color-border);
+}
+@media (max-width: 768px) {
+  .reviews-wrapper {
+    column-count: 1;
+  }
+}
+</style>
