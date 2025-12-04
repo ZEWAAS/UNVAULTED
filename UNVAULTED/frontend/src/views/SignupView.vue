@@ -6,7 +6,7 @@
       <div class="card" :class="{ 'is-flipped': !isLogin }">
         <!-- LOGIN -->
         <div class="card__face card__face--front">
-          <h2 class="text-3xl font-bold text-sky-600 mb-6">Login</h2>
+          <h2 class="text-3xl font-bold text-[var(--color-gold)] pb-2">Login</h2>
 
           <form @submit.prevent="handleLogin" class="w-full">
             <input v-model="formLogin.email" type="email" placeholder="Email" class="input" />
@@ -41,7 +41,7 @@
 
             <button
               type="submit"
-              class="w-full mt-4 py-2 bg-sky-500 hover:bg-sky-600 rounded-md font-semibold transition"
+              class="w-full mt-4 py-2 bg-[var(--color-gold)] hover:bg-[var(--color-accent)] hover:text-white rounded-md font-semibold transition hover:cursor-pointer"
             >
               Login
             </button>
@@ -49,7 +49,9 @@
 
           <p class="text-gray-400 mt-4">
             No account?
-            <span @click="isLogin = false" class="text-sky-500 cursor-pointer hover:underline"
+            <span
+              @click="isLogin = false"
+              class="text-[var(--color-gold)] cursor-pointer hover:underline"
               >Sign up</span
             >
           </p>
@@ -57,7 +59,7 @@
 
         <!-- SIGNUP -->
         <div class="card__face card__face--back">
-          <h2 class="text-3xl font-bold text-sky-500 mb-6">Sign Up</h2>
+          <h2 class="text-3xl font-bold text-[var(--color-gold)] pb-2">Sign Up</h2>
 
           <form @submit.prevent="handleSignup" class="w-full">
             <input
@@ -103,6 +105,18 @@
               </button>
             </div>
 
+            <ul class="w-full pb-3 pl-1 space-y-1">
+              <li
+                v-for="(criteria, index) in passwordCriteria"
+                :key="index"
+                class="text-xs flex items-center gap-2 transition-colors duration-300"
+                :class="criteria.valid ? 'text-green-400' : 'text-gray-500'"
+              >
+                <i :class="criteria.valid ? 'mdi mdi-check-circle' : 'mdi mdi-circle-outline'"></i>
+                {{ criteria.label }}
+              </li>
+            </ul>
+
             <p v-if="signupErrors.password" class="text-red-400 text-sm mb-2">
               {{ signupErrors.password }}
             </p>
@@ -115,7 +129,7 @@
 
             <button
               type="submit"
-              class="w-full mt-4 py-2 bg-sky-500 hover:bg-sky-600 rounded-md font-semibold transition"
+              class="w-full mt-4 py-2 bg-[var(--color-gold)] hover:bg-[var(--color-accent)] hover:text-white rounded-md font-semibold transition hover:cursor-pointer"
             >
               Sign Up
             </button>
@@ -123,7 +137,9 @@
 
           <p class="text-gray-400 mt-4">
             Already have an account?
-            <span @click="isLogin = true" class="text-sky-500 cursor-pointer hover:underline"
+            <span
+              @click="isLogin = true"
+              class="text-[var(--color-gold)] cursor-pointer hover:underline"
               >Login</span
             >
           </p>
@@ -134,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { auth, db } from '@/firebase/firebase-client.js'
 import { doc, setDoc, updateDoc } from 'firebase/firestore'
@@ -156,6 +172,32 @@ const formSignup = ref({ firstname: '', lastname: '', email: '', password: '' })
 
 const loginErrors = ref({})
 const signupErrors = ref({})
+
+// Real Time Password criteria
+const passwordCriteria = computed(() => {
+  const pwd = formSignup.value.password || ''
+  const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/
+  const middlePart = pwd.length > 2 ? pwd.slice(1, -1) : ''
+
+  return [
+    {
+      label: 'At least 8 characters',
+      valid: pwd.length >= 8,
+    },
+    {
+      label: 'At least one uppercase letter',
+      valid: /[A-Z]/.test(pwd),
+    },
+    {
+      label: 'At least one special character (not as first or last character)',
+      valid: specialCharRegex.test(middlePart),
+    },
+  ]
+})
+
+const isPasswordValid = computed(() => {
+  return passwordCriteria.value.every((criteria) => criteria.valid)
+})
 
 async function handleLogin() {
   loginErrors.value = {}
@@ -189,25 +231,14 @@ async function handleLogin() {
 async function handleSignup() {
   signupErrors.value = {}
 
-  const pwd = formSignup.value.password
-  const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/
-
   if (!formSignup.value.firstname) signupErrors.value.firstname = 'First name required'
   if (!formSignup.value.lastname) signupErrors.value.lastname = 'Last name required'
   if (!formSignup.value.email) signupErrors.value.email = 'Email required'
 
-  if (!pwd) {
+  if (!formSignup.value.password) {
     signupErrors.value.password = 'Password required'
-  } else if (pwd.length < 8) {
-    signupErrors.value.password = 'Password must be at least 8 characters long'
-  } else if (!/[A-Z]/.test(pwd)) {
-    signupErrors.value.password = 'Password must contain at least one uppercase letter'
-  } else {
-    const middlePart = pwd.slice(1, -1)
-    if (!specialCharRegex.test(middlePart)) {
-      signupErrors.value.password =
-        'Password must contain at least one special character (not as the first or last character)'
-    }
+  } else if (!isPasswordValid.value) {
+    signupErrors.value.password = 'Password does not meet all the requirements.'
   }
 
   if (Object.keys(signupErrors.value).length > 0) return
@@ -216,7 +247,7 @@ async function handleSignup() {
     const userCred = await createUserWithEmailAndPassword(
       auth,
       formSignup.value.email,
-      pwd,
+      formSignup.value.password,
     )
 
     await sendEmailVerification(userCred.user)
@@ -245,8 +276,8 @@ async function handleSignup() {
 
 <style scoped>
 .scene {
-  width: 24rem;
-  height: 27rem;
+  width: 26.6rem;
+  height: 30rem;
   perspective: 1200px;
   border-radius: 1rem;
 }
@@ -256,7 +287,7 @@ async function handleSignup() {
   transform-style: preserve-3d;
   transition: transform 0.7s;
   border-radius: 1rem;
-  background: #242b37;
+  background: #ffffff;
 }
 .card.is-flipped {
   transform: rotateY(180deg);
@@ -278,8 +309,9 @@ async function handleSignup() {
   width: 100%;
   padding: 0.75rem;
   margin-bottom: 0.5rem;
-  background: #242b37;
-  color: white;
+  background: #e8f0fe;
+  /*color: #242b37;*/
+  color: black;
   border-radius: 0.5rem;
   outline: none;
   border: none;

@@ -44,9 +44,11 @@
         placeholder="Search..."
         class="rounded-full px-4 py-1.5 border border-[var(--color-border)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white w-72"
       />
-      <button @click="addItem" class="w-[10rem] button-outline py-1">Add Item</button>
+      <button v-if="currentUser" @click="addItem" class="w-[10rem] button-outline py-1">
+        Add Item
+      </button>
 
-      <div class="relative flex">
+      <div class="relative flex" v-if="currentUser">
         <button
           @click="toggleDropdown"
           class="rounded-full transition-transform duration-150 ease-out hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
@@ -56,7 +58,7 @@
           type="button"
         >
           <img
-            src="https://tse3.mm.bing.net/th/id/OIP.vcjzhWLCN7-VOC95HeBsJAHaHa?rs=1&pid=ImgDetMain&o=7&rm=3"
+            :src="profileImage"
             class="size-14 rounded-full shadow-sm hover:shadow-md transition-shadow duration-150"
             alt="profile"
           />
@@ -129,14 +131,18 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, h } from 'vue'
 import { useRouter } from 'vue-router'
-import { auth } from '@/firebase/firebase-client.js'
-import { signOut } from 'firebase/auth'
+import { auth, db } from '@/firebase/firebase-client.js'
+import { signOut, onAuthStateChanged } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
 
 const dropdown = ref(false)
 const menuId = 'profile-menu'
 const router = useRouter()
+const currentUser = ref(null)
+const profileImage = ref('../src/assets/defaultProfile.jpg')
 
 function toggleDropdown() {
+  if (!currentUser.value) return
   dropdown.value = !dropdown.value
 }
 
@@ -154,6 +160,21 @@ async function handleLogout() {
     console.error('Logout failed', err)
   }
 }
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser.value = user
+
+  if (user) {
+    const userRef = doc(db, 'users', user.uid)
+    const snap = await getDoc(userRef)
+
+    if (snap.exists()) {
+      profileImage.value = snap.data().profileImage || '../src/assets/defaultProfile.jpg'
+    }
+  } else {
+    profileImage.value = '../src/assets/defaultProfile.jpg'
+  }
+})
 
 onMounted(() => window.addEventListener('click', handleClickOutside))
 onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside))
