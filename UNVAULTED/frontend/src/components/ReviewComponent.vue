@@ -75,7 +75,7 @@ onMounted(async () => {
       if (snap.exists()) {
         const data = snap.data()
         userName.value = `${data.FirstName} ${data.LastName}`
-        userImage.value = data.Image || '../assets/defaultProfile.png'
+        userImage.value = data.Image || '../assets/defaultProfile.jpg'
       } else {
         userName.value = 'Unknown'
       }

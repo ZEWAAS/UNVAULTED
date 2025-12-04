@@ -168,7 +168,7 @@
 <script setup>
 import ItemComponent from '../components/ItemComponent.vue'
 import ReviewComponent from '@/components/ReviewComponent.vue'
-import defaultProfile from '@/assets/defaultProfile.png'
+import defaultProfile from '@/assets/defaultProfile.jpg'
 
 import { ref, onMounted, computed } from 'vue'
 import { auth, db } from '@/firebase/firebase-client'
