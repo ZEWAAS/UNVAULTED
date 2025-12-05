@@ -39,7 +39,7 @@ router.beforeEach(async (to, from, next) => {
   const authRequired = !publicPages.includes(to.path)
 
   if (currentUser.value && to.path === '/signup') {
-    next('/profile')
+    next(`/profile/${currentUser.value.uid}`)
   } else if (authRequired && !currentUser.value) {
     next('/signup')
   } else {

@@ -221,7 +221,7 @@ async function handleLogin() {
     }
 
     await updateDoc(doc(db, 'Users', userCred.user.uid), { Verified: true })
-    router.push('/profile')
+    router.push(`/profile/${userCred.user.uid}`)
   } catch (err) {
     loginErrors.value.general = 'Invalid login credentials'
     console.error(err)
