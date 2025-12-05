@@ -1,7 +1,7 @@
 <template>
   <div class="pt-[120px] w-full flex justify-center">
     <div class="w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-md">
-      <div class="absolute top-4 right-6">
+      <div class="absolute top-4 right-6" v-if="isOwnProfile">
         <button @click="toggleEdit" class="px-4 py-1 button-solid">
           {{ editMode ? 'Save' : 'Edit Profile' }}
         </button>
@@ -130,22 +130,21 @@
             </div>
           </div>
 
-          <p v-else class="text-gray-700 italic">No products yet.</p>
+          <p v-else class="text-gray-700 h-[30vh] pt-[15vh] italic text-center">No products yet.</p>
         </div>
 
         <div v-else>
-          <div class="reviews-wrapper py-4 h-fit">
+          <div class="reviews-wrapper py-4">
             <div
               v-if="!isOwnProfile"
-              class="review-card leave-review hover:scale-101 hover:shadow-lg transition duration-200 cursor-pointer"
+              class="review-card leave-review hover:scale-101 hover:shadow-lg transition duration-200"
             >
-              <div class="pb-2 w-full">
-                <h1
-                  class="font-semibold text-2xl pl-[1rem] py-3 text-gray-800 pb-2 border-b border-[var(--color-border)]"
-                >
-                  Leave a Review
-                </h1>
-              </div>
+              <h1
+                class="font-semibold text-2xl pl-[1rem] py-3 text-gray-800 border-b border-[var(--color-border)]"
+              >
+                {{ userAlreadyReviewed ? 'Edit Your Review' : 'Leave a Review' }}
+              </h1>
+
               <div class="p-[1rem]">
                 <textarea
                   v-model="newReviewText"
@@ -160,18 +159,32 @@
                     v-for="n in 5"
                     :key="n"
                     @click="newReviewRating = n"
-                    class="text-2xl cursor-pointer transition"
+                    class="text-2xl cursor-pointer"
                     :class="n <= newReviewRating ? 'text-yellow-400' : 'text-gray-300'"
                   >
                     ★
                   </span>
                 </div>
 
-                <button @click="addReview" class="py-2 button-solid w-full">Submit Review</button>
+                <div class="flex gap-2">
+                  <button @click="saveReview" class="py-2 button-solid w-full">
+                    {{ userAlreadyReviewed ? 'Save Review' : 'Submit Review' }}
+                  </button>
+
+                  <button
+                    v-if="userAlreadyReviewed"
+                    @click="deleteReview"
+                    class="py-2 px-3 w-15 button-solid"
+                    style="background: var(--color-red); border-color: var(--color-red)"
+                  >
+<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#ffffff"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M10 11V17" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M14 11V17" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M4 7H20" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M6 7H12H18V18C18 19.6569 16.6569 21 15 21H9C7.34315 21 6 19.6569 6 18V7Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5V7H9V5Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg>                  </button>
+                </div>
               </div>
             </div>
 
-            <p v-if="user.Reviews.length === 0" class="text-gray-700 italic">No reviews yet.</p>
+            <p v-if="user.Reviews.length === 0" class="text-gray-700 italic text-center">
+              No reviews yet.
+            </p>
 
             <ReviewComponent
               v-for="(review, index) in user.Reviews"
@@ -180,7 +193,7 @@
               :rating="review.Rating"
               :user="review.User"
               :createdAt="review.createdAt"
-              class="review-card hover:scale-104 hover:shadow-lg transition duration-200 cursor-pointer"
+              class="review-card hover:scale-104 hover:shadow-lg transition duration-200"
             />
           </div>
         </div>
@@ -188,6 +201,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
@@ -201,7 +215,6 @@ import {
   where,
   getDocs,
   Timestamp,
-  arrayUnion,
 } from 'firebase/firestore'
 import { uploadSingleFile } from '@/scripts/cloudinary'
 
@@ -215,8 +228,8 @@ const route = useRoute()
 const user = ref(null)
 const items = ref([])
 const loading = ref(true)
-const editMode = ref(false)
 
+const editMode = ref(false)
 const editFirstName = ref('')
 const editLastName = ref('')
 
@@ -233,10 +246,23 @@ const newProfileImage = ref(null)
 
 const isOwnProfile = computed(() => loggedInUid.value === profileUid.value)
 
+const userAlreadyReviewed = computed(() => {
+  if (!user.value || !loggedInUid.value) return false
+  return user.value.Reviews.some((r) => r.User.id === loggedInUid.value)
+})
 
-// Load user profile and items
+const existingReview = computed(() => {
+  if (!userAlreadyReviewed.value) return null
+  return user.value.Reviews.find((r) => r.User.id === loggedInUid.value)
+})
+
+const profileImage = computed(() => {
+  return user.value?.Image?.trim() ? user.value.Image : defaultProfile
+})
+
 const loadProfile = async () => {
   loading.value = true
+
   const currentUser = auth.currentUser
   if (!currentUser) {
     router.push('/login')
@@ -249,33 +275,32 @@ const loadProfile = async () => {
   const profileRef = doc(db, 'Users', profileUid.value)
   const snap = await getDoc(profileRef)
 
-  if (!snap.exists()) {
-    console.error('User does not exist')
-    loading.value = false
-    return
-  }
-
   user.value = snap.data()
   user.value.id = profileUid.value
 
-  // Fetch items
   const itemsRef = collection(db, 'Items')
   const q = query(itemsRef, where('Seller', '==', profileRef))
   const itemSnap = await getDocs(q)
   items.value = itemSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
 
-  // Average rating
-  if (user.value.Reviews && user.value.Reviews.length > 0) {
-    const totalRating = user.value.Reviews.reduce((sum, review) => sum + review.Rating, 0)
-    rating.value = Math.round(totalRating / user.value.Reviews.length)
+  if (user.value.Reviews.length > 0) {
+    const total = user.value.Reviews.reduce((s, r) => s + r.Rating, 0)
+    rating.value = Math.round(total / user.value.Reviews.length)
   } else {
     rating.value = 0
+  }
+
+  if (userAlreadyReviewed.value) {
+    newReviewText.value = existingReview.value.Text
+    newReviewRating.value = existingReview.value.Rating
+  } else {
+    newReviewText.value = ''
+    newReviewRating.value = 0
   }
 
   loading.value = false
 }
 
-// Toggle edit mode for own profile
 const toggleEdit = async () => {
   if (!isOwnProfile.value) return
 
@@ -298,32 +323,33 @@ const toggleEdit = async () => {
   editMode.value = false
 }
 
-// Add a new review to another user's profile
-const addReview = async () => {
-  if (!profileUid.value || !loggedInUid.value) return
-  if (isOwnProfile.value) return
-
-  if (newReviewText.value.trim() === '' || newReviewRating.value === 0) {
-    alert('Please enter text and select a rating.')
-    return
-  }
-
+const saveReview = async () => {
   const profileRef = doc(db, 'Users', profileUid.value)
 
-  const newEntry = {
+  const updatedReviews = user.value.Reviews.filter((r) => r.User.id !== loggedInUid.value)
+
+  updatedReviews.push({
     Text: newReviewText.value,
     Rating: newReviewRating.value,
     User: doc(db, 'Users', loggedInUid.value),
     createdAt: Timestamp.now(),
-  }
-
-  await updateDoc(profileRef, {
-    Reviews: arrayUnion(newEntry),
   })
 
-  user.value.Reviews.push(newEntry)
-  newReviewText.value = ''
+  await updateDoc(profileRef, { Reviews: updatedReviews })
+
+  user.value.Reviews = updatedReviews
+}
+
+const deleteReview = async () => {
+  const profileRef = doc(db, 'Users', profileUid.value)
+
+  const remaining = user.value.Reviews.filter((r) => r.User.id !== loggedInUid.value)
+
+  await updateDoc(profileRef, { Reviews: remaining })
+  user.value.Reviews = remaining
+
   newReviewRating.value = 0
+  newReviewText.value = ''
 }
 
 onMounted(loadProfile)
@@ -373,7 +399,6 @@ const handleProfileImage = async (e) => {
 
 .leave-review {
   background: white;
-  border: 1px solid var(--color-border);
 }
 @media (max-width: 768px) {
   .reviews-wrapper {
