@@ -139,7 +139,8 @@ const dropdown = ref(false)
 const menuId = 'profile-menu'
 const router = useRouter()
 const currentUser = ref(null)
-const profileImage = ref('../src/assets/defaultProfile.jpg')
+import defaultProfile from '@/assets/defaultProfile.jpg'
+const profileImage = ref(defaultProfile)
 
 function toggleDropdown() {
   if (!currentUser.value) return
@@ -165,14 +166,14 @@ onAuthStateChanged(auth, async (user) => {
   currentUser.value = user
 
   if (user) {
-    const userRef = doc(db, 'users', user.uid)
+    const userRef = doc(db, 'Users', user.uid)
     const snap = await getDoc(userRef)
 
     if (snap.exists()) {
-      profileImage.value = snap.data().profileImage || '../src/assets/defaultProfile.jpg'
+      profileImage.value = snap.data().Image || defaultProfile
     }
   } else {
-    profileImage.value = '../src/assets/defaultProfile.jpg'
+    profileImage.value = defaultProfile
   }
 })
 
@@ -270,7 +271,7 @@ const LogoutIcon = (props: any) =>
 
 const items = computed(() => [
   { label: 'History', to: '/', icon: HistoryIcon },
-  { label: 'Your Offers', to: '/', icon: OffersIcon },
+  { label: 'Your Favorites', to: '/', icon: OffersIcon },
   {
     label: 'Your Profile',
     to: currentUser.value ? `/profile/${currentUser.value.uid}` : '/profile',
