@@ -275,7 +275,7 @@ async function saveItem() {
 
     // Redirect to user profile after short delay
     setTimeout(() => {
-      router.push(`/profile`)
+      router.push(`/profile/${currentUser.uid}`)
     }, 800)
   } catch (error) {
     console.error(error)

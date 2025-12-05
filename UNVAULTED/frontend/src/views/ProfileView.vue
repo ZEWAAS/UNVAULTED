@@ -1,6 +1,7 @@
 <template>
+  <div class="pt-[120px] w-full flex justify-center">
   <div
-    class="fixed top-[15vh] left-1/2 transform -translate-x-1/2 w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center shadow-md"
+    class="w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-md"
   >
     <div class="absolute top-4 right-6">
       <button @click="toggleEdit" class="px-4 py-1 button-solid">
@@ -168,6 +169,7 @@
       </div>
     </div>
   </div>
+</div>
 </template>
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'

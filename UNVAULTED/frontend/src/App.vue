@@ -18,7 +18,7 @@ import TopBar from './components/TopBar.vue'
 .app-layout {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 header {
@@ -27,6 +27,5 @@ header {
 
 .content {
   flex: 1;
-  overflow-y: auto;
 }
 </style>
