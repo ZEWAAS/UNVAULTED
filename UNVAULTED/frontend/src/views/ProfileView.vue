@@ -1,115 +1,134 @@
 <template>
-  <div
-    class="fixed top-[15vh] left-1/2 transform -translate-x-1/2 w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 flex flex-col items-center shadow-md"
-  >
-    <div class="absolute top-4 right-6" v-if="isOwnProfile">
-      <button @click="toggleEdit" class="px-4 py-1 button-solid">
-        {{ editMode ? 'Save' : 'Edit Profile' }}
-      </button>
-    </div>
-    <div v-if="loading" class="text-center text-gray-700">Loading...</div>
-    <div v-else class="flex flex-col md:flex-row items-center md:items-start gap-6 w-full">
-      <img
-        :src="profileImage"
-        alt="Profile Picture"
-        class="profile-icon w-40 h-40 rounded-full object-cover"
-      />
-      <div class="flex flex-col gap-6 text-center md:text-left">
-        <div>
-          <div class="font-bold text-2xl tracking-widest text-gray-800">
-            <div v-if="editMode" class="flex gap-2">
-              <input
-                v-model="editFirstName"
-                class="border p-1 rounded-lg bg-white/80 w-32"
-                placeholder="First Name"
-              />
-              <input
-                v-model="editLastName"
-                class="border p-1 rounded-lg bg-white/80 w-32"
-                placeholder="Last Name"
-              />
-            </div>
-            <p v-else>{{ user.FirstName }} {{ user.LastName }}</p>
-          </div>
+  <div class="pt-[120px] w-full flex justify-center">
+    <div class="w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-md">
+      <div class="absolute top-4 right-6">
+        <button @click="toggleEdit" class="px-4 py-1 button-solid">
+          {{ editMode ? 'Save' : 'Edit Profile' }}
+        </button>
+      </div>
+      <div v-if="loading" class="text-center text-gray-700">Loading...</div>
+      <div v-else class="flex flex-col md:flex-row items-center md:items-start gap-6 w-full">
+        <div class="relative w-40 h-40">
+          <!-- Normal view -->
+          <img
+            v-if="!editMode"
+            :src="user.Image || defaultProfile"
+            class="w-40 h-40 rounded-full object-cover"
+          />
 
-          <div class="flex gap-1">
-            <span
-              v-for="n in 5"
-              :key="n"
-              class="text-2xl"
-              :class="n <= rating ? 'text-yellow-400' : 'text-gray-300'"
-            >
-              ★
-            </span>
-          </div>
+          <!-- Edit mode -->
+          <label
+            v-else
+            class="w-40 h-40 rounded-full overflow-hidden cursor-pointer border border-gray-300 flex items-center justify-center bg-gray-100"
+          >
+            <img
+              v-if="newProfileImage || user.Image"
+              :src="newProfileImage || user.Image"
+              class="w-full h-full object-cover"
+            />
+            <span v-else class="text-sm text-gray-600">Upload Image</span>
 
-          <p class="tracking-widest text-gray-800 text-sm">
-            {{ user.Reviews.length }} {{ user.Reviews.length == 1 ? 'Review' : 'Reviews' }}
-          </p>
+            <input type="file" accept="image/*" class="hidden" @change="handleProfileImage" />
+          </label>
         </div>
 
-        <div class="flex flex-col gap-2">
-          <p class="font-bold tracking-widest text-gray-800">About:</p>
-          <div class="grid grid-cols-[auto_auto] gap-1 justify-center md:justify-start">
-            <img src="@/assets/location.png" class="size-5" />
-            <p>{{ user.Street || 'No data' }}</p>
+        <div class="flex flex-col gap-6 text-center md:text-left">
+          <div>
+            <div class="font-bold text-2xl tracking-widest text-gray-800">
+              <div v-if="editMode" class="flex gap-2">
+                <input
+                  v-model="editFirstName"
+                  class="border p-1 rounded-lg bg-white/80 w-32"
+                  placeholder="First Name"
+                />
+                <input
+                  v-model="editLastName"
+                  class="border p-1 rounded-lg bg-white/80 w-32"
+                  placeholder="Last Name"
+                />
+              </div>
+              <p v-else class="select-none">{{ user.FirstName }} {{ user.LastName }}</p>
+            </div>
+            <div class="flex gap-1">
+              <span
+                v-for="n in 5"
+                :key="n"
+                class="text-2xl"
+                :class="n <= rating ? 'text-yellow-400' : 'text-gray-300'"
+              >
+                ★
+              </span>
+            </div>
+            <p class="tracking-widest text-gray-800 text-sm select-none">
+              {{ user.Reviews.length }} {{ user.Reviews.length == 1 ? 'Review' : 'Reviews' }}
+            </p>
+          </div>
 
-            <img src="@/assets/follower.png" class="size-5" />
-            <p>{{ user.Followers }} Followers</p>
-
-            <img src="@/assets/verification.png" class="size-5" />
-            <p>{{ user.Verified ? 'Verified' : 'Not Verified' }}</p>
+          <div class="flex flex-col gap-2">
+            <p class="font-bold tracking-widest text-gray-800 select-none">About:</p>
+            <div class="grid grid-cols-[auto_auto] gap-1 justify-center md:justify-start">
+              <img src="@/assets/location.png" class="size-5" />
+              <p class="tracking-widest text-gray-800 select-none">
+                {{ user.Street || 'No data' }}
+              </p>
+              <img src="@/assets/follower.png" class="size-5" />
+              <p class="tracking-widest text-gray-800 select-none">
+                {{ user.Followers }} Followers
+              </p>
+              <img src="@/assets/verification.png" class="size-5" />
+              <p class="tracking-widest text-gray-800 select-none">
+                {{ user.Verified ? 'Verified' : 'Not Verified' }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="flex gap-8 border-b border-gray-300 pt-10 w-full" v-if="!loading">
-      <button
-        @click="activeTab = 'products'"
-        :class="[
-          'pb-2 font-semibold transition-colors',
-          activeTab === 'products'
-            ? 'border-b-2 border-blue-600 text-blue-600'
-            : 'text-gray-600 hover:text-blue-600',
-        ]"
-      >
-        Products
-      </button>
+      <div class="flex gap-8 border-b border-gray-300 pt-10 w-full" v-if="!loading">
+        <button
+          @click="activeTab = 'products'"
+          :class="[
+            'pb-2 font-semibold tracking-wide transition-colors',
+            activeTab === 'products'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-gray-600 hover:text-blue-600',
+          ]"
+        >
+          Products
+        </button>
+        <button
+          @click="activeTab = 'reviews'"
+          :class="[
+            'pb-2 font-semibold tracking-wide transition-colors',
+            activeTab === 'reviews'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-gray-600 hover:text-blue-600',
+          ]"
+        >
+          Reviews
+        </button>
+      </div>
 
-      <button
-        @click="activeTab = 'reviews'"
-        :class="[
-          'pb-2 font-semibold transition-colors',
-          activeTab === 'reviews'
-            ? 'border-b-2 border-blue-600 text-blue-600'
-            : 'text-gray-600 hover:text-blue-600',
-        ]"
-      >
-        Reviews
-      </button>
-    </div>
-
-    <div class="mt-6 w-full" v-if="!loading">
-      <div v-if="activeTab === 'products'">
-        <div v-if="items.length > 0" class="w-full overflow-x-auto whitespace-nowrap py-4">
-          <div class="flex gap-4">
-            <ItemComponent
-              v-for="item in items"
-              :key="item.id"
-              :title="item.Title"
-              :price="item.Price"
-              :image="item.Images?.[0] || ''"
-              :seller="item.Seller"
-              :likeCount="item.Likes"
-              :sellType="
-                item.SellType === 0 ? 'Sell' : item.SellType === 1 ? 'Trade' : 'Sell/Trade'
-              "
-              :is-liked="false"
-              class="shrink-0"
-            />
+      <div class="mt-6 w-full text-center md:text-left" v-if="!loading">
+        <div v-if="activeTab === 'products'">
+          <div v-if="items.length > 0" class="w-full overflow-x-auto whitespace-nowrap py-4">
+            <div class="flex gap-4">
+              <ItemComponent
+                v-for="item in items"
+                :key="item.id"
+                :title="item.Title"
+                :price="item.Price"
+                :image="item.Images?.[0] || ''"
+                :seller="item.Seller"
+                :likeCount="item.Likes"
+                :sellType="
+                  item.SellType === 0 ? 'Sell' : item.SellType === 1 ? 'Trade' : 'Sell/Trade'
+                "
+                :is-liked="false"
+                class="shrink-0"
+              />
+            </div>
           </div>
-        </div>
 
         <p v-else class="text-gray-700 h-[30vh] pt-[15vh] italic text-center">No products yet.</p>
       </div>
@@ -197,6 +216,7 @@ import {
   getDocs,
   Timestamp,
 } from 'firebase/firestore'
+import { uploadSingleFile } from '@/scripts/cloudinary'
 
 import ItemComponent from '../components/ItemComponent.vue'
 import ReviewComponent from '@/components/ReviewComponent.vue'
@@ -221,6 +241,8 @@ const newReviewText = ref('')
 
 const loggedInUid = ref(null)
 const profileUid = ref(null)
+
+const newProfileImage = ref(null)
 
 const isOwnProfile = computed(() => loggedInUid.value === profileUid.value)
 
@@ -290,6 +312,7 @@ const toggleEdit = async () => {
   await updateDoc(userRef, {
     FirstName: editFirstName.value,
     LastName: editLastName.value,
+    ...(newProfileImage.value && { Image: newProfileImage.value }),
   })
 
   user.value.FirstName = editFirstName.value
@@ -328,7 +351,30 @@ const deleteReview = async () => {
 
 onMounted(loadProfile)
 
-watch(() => route.params.id, loadProfile)
+// Watch route param to reload profile when navigating to other profile
+watch(
+  () => route.params.id,
+  async (newId, oldId) => {
+    if (newId !== oldId) {
+      await loadProfile()
+    }
+  },
+)
+
+//Profile Image Handling
+const handleProfileImage = async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+
+  try {
+    const url = await uploadSingleFile(file, 'profile_pictures')
+    newProfileImage.value = url
+    user.value.Image = url
+  } catch (err) {
+    console.error('Upload failed:', err)
+    alert('Upload failed!')
+  }
+}
 </script>
 
 <style scoped>

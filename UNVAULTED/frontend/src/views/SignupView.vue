@@ -252,6 +252,7 @@ async function handleSignup() {
 
     await sendEmailVerification(userCred.user)
 
+
     await setDoc(doc(db, 'Users', userCred.user.uid), {
       Email: formSignup.value.email,
       FirstName: formSignup.value.firstname,
@@ -263,6 +264,11 @@ async function handleSignup() {
       Items: [],
       Reviews: [],
     })
+
+    await signOut(auth)
+    signupErrors.value.emailverification =
+      'Verification email sent. Please verify your email before logging in.'
+    isLogin.value = true
 
     signupErrors.value.emailverification = 'Verification email sent.'
 
