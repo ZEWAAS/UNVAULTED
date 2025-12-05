@@ -1,7 +1,7 @@
 <template>
   <div class="pt-[120px] w-full flex justify-center">
     <div class="w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-md">
-      <div class="absolute top-4 right-6">
+      <div class="absolute top-4 right-6" v-if="isOwnProfile">
         <button @click="toggleEdit" class="px-4 py-1 button-solid">
           {{ editMode ? 'Save' : 'Edit Profile' }}
         </button>
@@ -130,72 +130,73 @@
             </div>
           </div>
 
-        <p v-else class="text-gray-700 h-[30vh] pt-[15vh] italic text-center">No products yet.</p>
-      </div>
+          <p v-else class="text-gray-700 h-[30vh] pt-[15vh] italic text-center">No products yet.</p>
+        </div>
 
-      <div v-else>
-        <div class="reviews-wrapper py-4">
-          <div
-            v-if="!isOwnProfile"
-            class="review-card leave-review hover:scale-101 hover:shadow-lg transition duration-200"
-          >
-            <h1
-              class="font-semibold text-2xl pl-[1rem] py-3 text-gray-800 border-b border-[var(--color-border)]"
+        <div v-else>
+          <div class="reviews-wrapper py-4">
+            <div
+              v-if="!isOwnProfile"
+              class="review-card leave-review hover:scale-101 hover:shadow-lg transition duration-200"
             >
-              {{ userAlreadyReviewed ? 'Edit Your Review' : 'Leave a Review' }}
-            </h1>
+              <h1
+                class="font-semibold text-2xl pl-[1rem] py-3 text-gray-800 border-b border-[var(--color-border)]"
+              >
+                {{ userAlreadyReviewed ? 'Edit Your Review' : 'Leave a Review' }}
+              </h1>
 
-            <div class="p-[1rem]">
-              <textarea
-                v-model="newReviewText"
-                placeholder="Write your review..."
-                class="border rounded-lg p-2 w-full text-gray-700"
-                rows="3"
-              ></textarea>
+              <div class="p-[1rem]">
+                <textarea
+                  v-model="newReviewText"
+                  placeholder="Write your review..."
+                  class="border rounded-lg p-2 w-full text-gray-700"
+                  rows="3"
+                ></textarea>
 
-              <div class="flex gap-1 items-center my-2 pb-1">
-                <p class="pr-2">Rating:</p>
-                <span
-                  v-for="n in 5"
-                  :key="n"
-                  @click="newReviewRating = n"
-                  class="text-2xl cursor-pointer"
-                  :class="n <= newReviewRating ? 'text-yellow-400' : 'text-gray-300'"
-                >
-                  ★
-                </span>
-              </div>
+                <div class="flex gap-1 items-center my-2 pb-1">
+                  <p class="pr-2">Rating:</p>
+                  <span
+                    v-for="n in 5"
+                    :key="n"
+                    @click="newReviewRating = n"
+                    class="text-2xl cursor-pointer"
+                    :class="n <= newReviewRating ? 'text-yellow-400' : 'text-gray-300'"
+                  >
+                    ★
+                  </span>
+                </div>
 
-              <div class="flex gap-2">
-                <button @click="saveReview" class="py-2 button-solid w-full">
-                  {{ userAlreadyReviewed ? 'Save Review' : 'Submit Review' }}
-                </button>
+                <div class="flex gap-2">
+                  <button @click="saveReview" class="py-2 button-solid w-full">
+                    {{ userAlreadyReviewed ? 'Save Review' : 'Submit Review' }}
+                  </button>
 
-                <button
-                  v-if="userAlreadyReviewed"
-                  @click="deleteReview"
-                  class="py-2 px-3 button-solid"
-                  style="background: var(--color-red); border-color: var(--color-red)"
-                >
-                  Delete
-                </button>
+                  <button
+                    v-if="userAlreadyReviewed"
+                    @click="deleteReview"
+                    class="py-2 px-3 button-solid"
+                    style="background: var(--color-red); border-color: var(--color-red)"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
+
+            <p v-if="user.Reviews.length === 0" class="text-gray-700 italic text-center">
+              No reviews yet.
+            </p>
+
+            <ReviewComponent
+              v-for="(review, index) in user.Reviews"
+              :key="index"
+              :text="review.Text"
+              :rating="review.Rating"
+              :user="review.User"
+              :createdAt="review.createdAt"
+              class="review-card hover:scale-104 hover:shadow-lg transition duration-200"
+            />
           </div>
-
-          <p v-if="user.Reviews.length === 0" class="text-gray-700 italic text-center">
-            No reviews yet.
-          </p>
-
-          <ReviewComponent
-            v-for="(review, index) in user.Reviews"
-            :key="index"
-            :text="review.Text"
-            :rating="review.Rating"
-            :user="review.User"
-            :createdAt="review.createdAt"
-            class="review-card hover:scale-104 hover:shadow-lg transition duration-200"
-          />
         </div>
       </div>
     </div>
