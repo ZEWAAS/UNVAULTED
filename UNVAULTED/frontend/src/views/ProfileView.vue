@@ -344,7 +344,11 @@ const loadProfile = async () => {
 
   user.value = snap.data()
   user.value.id = profileUid.value
-  following.value = user.value.Following?.includes(loggedInUid.value) || false
+
+  const myRef = doc(db, 'Users', loggedInUid.value)
+  const mySnap = await getDoc(myRef)
+  const data = mySnap.data()
+  following.value = data.Following?.includes(profileUid.value) || false
 
   const itemsRef = collection(db, 'Items')
   const q = query(itemsRef, where('Seller', '==', profileRef))
@@ -392,24 +396,37 @@ const toggleEdit = async () => {
 }
 
 const toggleFollow = async () => {
-  const profileRef = doc(db, 'Users', profileUid.value)
+  const myRef = doc(db, 'Users', loggedInUid.value)
+  const theirRef = doc(db, 'Users', profileUid.value)
 
-  let list = user.value.Following || []
+  const mySnap = await getDoc(myRef)
+  const theirSnap = await getDoc(theirRef)
+
+  const myData = mySnap.data()
+  const theirData = theirSnap.data()
+
+  let updatedFollowing = myData.Following || []
 
   if (!following.value) {
-    list.push(loggedInUid.value)
+    updatedFollowing.push(profileUid.value)
+
+    await updateDoc(theirRef, {
+      Followers: (theirData.Followers || 0) + 1,
+    })
   } else {
-    list = list.filter((id) => id !== loggedInUid.value)
+    updatedFollowing = updatedFollowing.filter((id) => id !== profileUid.value)
+
+    await updateDoc(theirRef, {
+      Followers: (theirData.Followers || 0) - 1,
+    })
   }
 
-  await updateDoc(profileRef, {
-    Following: list,
-    Followers: list.length,
+  await updateDoc(myRef, {
+    Following: updatedFollowing,
   })
 
   following.value = !following.value
-  user.value.Followers = list.length
-  user.value.Following = list
+  user.value.Followers = theirData.Followers + (following.value ? 1 : -1)
 }
 
 const saveReview = async () => {
