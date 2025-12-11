@@ -125,6 +125,7 @@
               <ItemComponent
                 v-for="item in items"
                 :key="item.id"
+                :id="item.id"
                 :title="item.Title"
                 :price="item.Price"
                 :image="item.Images?.[0] || ''"
