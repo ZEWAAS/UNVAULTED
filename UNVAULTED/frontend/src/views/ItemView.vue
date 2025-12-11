@@ -110,7 +110,6 @@ onMounted(async () => {
                      reviews: s.Reviews.length || 0,
                      rating: s.rating || 0,
                  }
-                 console.log(sellerData.value.id)
              }
         }
     } catch (e) {
