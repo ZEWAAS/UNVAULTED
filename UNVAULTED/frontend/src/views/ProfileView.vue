@@ -30,6 +30,15 @@
 
             <input type="file" accept="image/*" class="hidden" @change="handleProfileImage" />
           </label>
+          <div class="h-2"></div>
+          <button
+            v-if="!isOwnProfile"
+            @click="toggleFollow"
+            class="w-full py-1"
+            :class="!following ? 'button-solid' : 'button-outline'"
+          >
+            {{ following ? 'Following' : 'Follow' }}
+          </button>
         </div>
 
         <div class="flex flex-col gap-6 text-center md:text-left">
@@ -276,6 +285,7 @@ import { uploadSingleFile } from '@/scripts/cloudinary'
 import ItemComponent from '../components/ItemComponent.vue'
 import ReviewComponent from '@/components/ReviewComponent.vue'
 import defaultProfile from '@/assets/defaultProfile.jpg'
+import { arrayUnion, arrayRemove } from 'firebase/firestore'
 
 const router = useRouter()
 const route = useRoute()
@@ -297,6 +307,7 @@ const newReviewText = ref('')
 const loggedInUid = ref(null)
 const profileUid = ref(null)
 
+const following = ref(false)
 const newProfileImage = ref(null)
 
 const isOwnProfile = computed(() => loggedInUid.value === profileUid.value)
@@ -332,6 +343,7 @@ const loadProfile = async () => {
 
   user.value = snap.data()
   user.value.id = profileUid.value
+  following.value = user.value.Following?.includes(loggedInUid.value) || false
 
   const itemsRef = collection(db, 'Items')
   const q = query(itemsRef, where('Seller', '==', profileRef))
@@ -376,6 +388,27 @@ const toggleEdit = async () => {
   user.value.FirstName = editFirstName.value
   user.value.LastName = editLastName.value
   editMode.value = false
+}
+
+const toggleFollow = async () => {
+  const profileRef = doc(db, 'Users', profileUid.value)
+
+  let list = user.value.Following || []
+
+  if (!following.value) {
+    list.push(loggedInUid.value)
+  } else {
+    list = list.filter((id) => id !== loggedInUid.value)
+  }
+
+  await updateDoc(profileRef, {
+    Following: list,
+    Followers: list.length,
+  })
+
+  following.value = !following.value
+  user.value.Followers = list.length
+  user.value.Following = list
 }
 
 const saveReview = async () => {
