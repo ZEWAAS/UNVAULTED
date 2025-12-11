@@ -252,7 +252,6 @@ async function handleSignup() {
 
     await sendEmailVerification(userCred.user)
 
-
     await setDoc(doc(db, 'Users', userCred.user.uid), {
       Email: formSignup.value.email,
       FirstName: formSignup.value.firstname,
@@ -260,6 +259,7 @@ async function handleSignup() {
       CreatedAt: new Date(),
       Verified: false,
       Followers: 0,
+      Following: [],
       Image: '',
       Items: [],
       Reviews: [],
