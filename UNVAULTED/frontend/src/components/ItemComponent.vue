@@ -66,6 +66,7 @@ import { doc, getDoc } from 'firebase/firestore'
 const router = useRouter()
 
 const props = defineProps({
+  id: { type: String, required: true },
   title: { type: String, required: true, default: 'Title' },
   price: { type: Number, required: true, default: 10000 },
   image: {
@@ -111,8 +112,7 @@ onMounted(async () => {
 function goToItemPage() {
   router.push({
     name: 'items',
-    params: { id: props.title.replace(/\s+/g, '-') },
-    state: { itemData: { ...props } },
+    params: { id: props.id },
   })
 }
 </script>
