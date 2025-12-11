@@ -231,25 +231,35 @@ const ProfileIcon = (props: any) =>
     },
     [h('path', { d: 'M20 21a8 8 0 1 0-16 0' }), h('circle', { cx: 12, cy: 7, r: 4 })],
   )
-const SettingsIcon = (props: any) =>
+const FollowingIcon = (props) =>
   h(
     'svg',
     {
       ...props,
       viewBox: '0 0 24 24',
       fill: 'none',
-      stroke: 'currentColor',
-      'stroke-width': 1.75,
+      xmlns: 'http://www.w3.org/2000/svg',
+      stroke: '#000000',
+      'stroke-width': 1,
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round',
     },
     [
-      h('circle', { cx: 12, cy: 12, r: 3 }),
       h('path', {
-        d: 'M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9',
+        d: 'M16.719 19.7519L16.0785 14.6279C15.8908 13.1266 14.6146 12 13.1017 12H12H10.8983C9.38538 12 8.10917 13.1266 7.92151 14.6279L7.28101 19.7519C7.1318 20.9456 8.06257 22 9.26556 22H12H14.7344C15.9374 22 16.8682 20.9456 16.719 19.7519Z',
+      }),
+      h('circle', { cx: 12, cy: 5, r: 3 }),
+      h('circle', { cx: 4, cy: 9, r: 2 }),
+      h('circle', { cx: 20, cy: 9, r: 2 }),
+      h('path', {
+        d: 'M4 14H3.69425C2.71658 14 1.8822 14.7068 1.72147 15.6712L1.38813 17.6712C1.18496 18.8903 2.12504 20 3.36092 20H7',
+      }),
+      h('path', {
+        d: 'M20 14H20.3057C21.2834 14 22.1178 14.7068 22.2785 15.6712L22.6119 17.6712C22.815 18.8903 21.8751 20 20.6392 20C19.4775 20 18.0952 20 17 20',
       }),
     ],
   )
+
 const LogoutIcon = (props: any) =>
   h(
     'svg',
@@ -271,12 +281,13 @@ const LogoutIcon = (props: any) =>
 
 const items = computed(() => [
   { label: 'History', to: '/', icon: HistoryIcon },
-  { label: 'Your Favorites', to: '/', icon: OffersIcon },
+  { label: 'Favorites', to: '/favorites', icon: OffersIcon },
+
+  { label: 'Following', to: '/following', icon: FollowingIcon },
   {
     label: 'Your Profile',
     to: currentUser.value ? `/profile/${currentUser.value.uid}` : '/profile',
     icon: ProfileIcon,
   },
-  { label: 'Settings', to: '/', icon: SettingsIcon },
 ])
 </script>
