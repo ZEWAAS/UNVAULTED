@@ -95,13 +95,22 @@ onMounted(async () => {
              const sellerSnap = await getDoc(itemData.value.Seller)
              if (sellerSnap.exists()) {
                  const s = sellerSnap.data()
+                 if (s.Reviews.length > 0) {
+                     const totalRatingValue = s.Reviews.reduce((s, r) => s + r.Rating, 0)
+                     s.rating = Math.round(totalRatingValue / s.Reviews.length)
+                 } else {
+                     s.rating = 0
+                 }
                  sellerData.value = {
                      ...s,
+                     id: itemData.value.Seller.id,
                      name: `${s.FirstName} ${s.LastName}`,
-                     // Ensure image fallback
-                     image: s.image || 'https://via.placeholder.com/100',
-                     verified: s.verified || false
+                     image: s.Image,
+                     verified: s.Verified || false,
+                     reviews: s.Reviews.length || 0,
+                     rating: s.rating || 0,
                  }
+                 console.log(sellerData.value.id)
              }
         }
     } catch (e) {
