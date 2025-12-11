@@ -124,7 +124,7 @@ const props = defineProps({
       name: 'Unknown Seller',
       username: 'unknown_user',
       verified: false,
-      image: 'https://via.placeholder.com/100',
+      image: '../src/assets/defaultProfile.jpg',
     }),
   },
   allowBuy: { type: Boolean, default: true },
