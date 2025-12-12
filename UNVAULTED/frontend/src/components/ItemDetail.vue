@@ -45,28 +45,31 @@
         <h1 class="text-4xl font-extrabold leading-tight text-gray-900">{{ title }}</h1>
 
         <div
-          class="flex items-center justify-between gap-3 rounded-full border border-gray-200 px-1 py-1 pr-8 shadow-sm"
+          class="flex items-center justify-between gap-3 rounded-full border border-gray-200 px-1 py-2 pr-8 shadow-sm hover:scale-102 hover:shadow-md transition duration-200 cursor-pointer"
+          @click="goToUserPage"
         >
           <div class="flex items-center gap-3">
             <img :src="seller.image" class="w-14 h-14 rounded-full object-cover" />
             <div class="w-100 flex flex-col justify-between h-14">
               <div class="flex items-center gap-1">
                 <p class="font-semibold text-2xl text-gray-900">{{ seller.name }}</p>
-                <svg
-                  v-if="seller.verified"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="#2563eb"
-                  class="flex items-center max-h-6"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M12 2.25a.75.75 0 0 1 .684.452l1.497 3.267 3.553.512a.75.75 0 0 1 .416 1.28l-2.57 2.507.606 3.54a.75.75 0 0 1-1.088.791L12 13.347l-3.178 1.672a.75.75 0 0 1-1.088-.79l.606-3.541-2.57-2.507a.75.75 0 0 1 .416-1.28l3.553-.512 1.497-3.267A.75.75 0 0 1 12 2.25Z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
+                <img v-if="seller.verified" src="@/assets/verification.png" class="size-5" />
               </div>
-              <p class="text-x text-gray-500">⭐⭐⭐⭐⭐ 253 ratings</p>
+              <div class="flex flex-row gap-2">
+                <div class="flex flex-row">
+                  <span
+                    v-for="n in 5"
+                    :key="n"
+                    class="text-2xl"
+                    :class="n <= seller.rating ? 'text-yellow-400' : 'text-gray-300'"
+                  >
+                    ★
+                  </span>
+                </div>
+                <p class="tracking-widest text-gray-800 text-sm pt-1.5">
+                  {{ seller.reviews }} {{ seller.reviews == 1 ? 'Review' : 'Reviews' }}
+                </p>
+              </div>
             </div>
           </div>
           <span class="text-gray-400 text-lg">›</span>
@@ -111,7 +114,10 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { ref } from 'vue'
+
+const router = useRouter()
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -125,6 +131,9 @@ const props = defineProps({
       username: 'unknown_user',
       verified: false,
       image: '../src/assets/defaultProfile.jpg',
+      rating: 0,
+      reviews: 0,
+
     }),
   },
   allowBuy: { type: Boolean, default: true },
@@ -154,5 +163,12 @@ function scrollToChat() {
   if (chatSection) {
     chatSection.scrollIntoView({ behavior: 'smooth' })
   }
+}
+
+function goToUserPage() {
+  router.push({
+    name: 'profile',
+    params: { id: props.seller.id },
+  })
 }
 </script>
