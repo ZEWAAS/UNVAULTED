@@ -27,7 +27,6 @@
   @apply text-white rounded-xl font-semibold text-lg transition-all duration-150 border-2;
   background: var(--color-gold);
   border-color: var(--color-gold);
-  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gold) 40%, transparent);
 }
 
 .button-solid:hover {

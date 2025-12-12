@@ -1,9 +1,12 @@
 <template>
   <div class="pt-[120px] w-full flex justify-center">
     <div class="w-[85%] max-w-[100vw] bg-white/60 backdrop-blur-md rounded-2xl p-6 shadow-md">
-      <div class="absolute top-4 right-6" v-if="isOwnProfile">
+      <div class="absolute top-4 right-6 flex items-center gap-2" v-if="isOwnProfile">
         <button @click="toggleEdit" class="px-4 py-1 button-solid">
           {{ editMode ? 'Save' : 'Edit Profile' }}
+        </button>
+        <button v-if="editMode" @click="cancelEdit" class="px-4 py-1 button-solid">
+          Cancel
         </button>
       </div>
       <div v-if="loading" class="text-center text-gray-700">Loading...</div>
@@ -44,17 +47,40 @@
         <div class="flex flex-col gap-6 text-center md:text-left">
           <div>
             <div class="font-bold text-2xl tracking-widest text-gray-800">
-              <div v-if="editMode" class="flex gap-2">
-                <input
-                  v-model="editFirstName"
-                  class="border p-1 rounded-lg bg-white/80 w-32"
-                  placeholder="First Name"
-                />
-                <input
-                  v-model="editLastName"
-                  class="border p-1 rounded-lg bg-white/80 w-32"
-                  placeholder="Last Name"
-                />
+              <div v-if="editMode" class="flex flex-col gap-3">
+                <div class="flex gap-2">
+                  <input
+                    v-model="editFirstName"
+                    class="border p-1 rounded-lg bg-white/80 w-32"
+                    placeholder="First Name"
+                  />
+                  <input
+                    v-model="editLastName"
+                    class="border p-1 rounded-lg bg-white/80 w-32"
+                    placeholder="Last Name"
+                  />
+                </div>
+                <div class="relative">
+                  <input
+                    :value="addressText"
+                    @input="onAddressInput"
+                    placeholder="Type your address (e.g., Berlin, Germany)"
+                    class="border p-2 rounded-lg bg-white/80 w-full"
+                  />
+                  <div
+                    v-if="showSuggestions && addressSuggestions.length > 0"
+                    class="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
+                  >
+                    <div
+                      v-for="(place, idx) in addressSuggestions"
+                      :key="idx"
+                      @click="selectAddress(place)"
+                      class="p-2 cursor-pointer hover:bg-blue-100 border-b"
+                    >
+                      {{ place.display_name }}
+                    </div>
+                  </div>
+                </div>
               </div>
               <p v-else class="select-none">{{ user.FirstName }} {{ user.LastName }}</p>
             </div>
@@ -280,6 +306,7 @@ import {
   where,
   getDocs,
   Timestamp,
+  GeoPoint,
 } from 'firebase/firestore'
 import { uploadSingleFile } from '@/scripts/cloudinary'
 
@@ -310,6 +337,14 @@ const profileUid = ref(null)
 
 const following = ref(false)
 const newProfileImage = ref(null)
+
+// Address / Nominatim
+const addressText = ref('')
+const addressSuggestions = ref([])
+const showSuggestions = ref(false)
+const selectedLat = ref(null)
+const selectedLng = ref(null)
+let debounceTimer = null
 
 const isOwnProfile = computed(() => loggedInUid.value === profileUid.value)
 
@@ -344,6 +379,11 @@ const loadProfile = async () => {
 
   user.value = snap.data()
   user.value.id = profileUid.value
+  addressText.value = user.value.Street || ''
+  if (user.value.Location) {
+    selectedLat.value = user.value.Location.latitude
+    selectedLng.value = user.value.Location.longitude
+  }
   following.value = user.value.Following?.includes(loggedInUid.value) || false
 
   const itemsRef = collection(db, 'Items')
@@ -380,15 +420,30 @@ const toggleEdit = async () => {
   }
 
   const userRef = doc(db, 'Users', loggedInUid.value)
-  await updateDoc(userRef, {
+  const updatePayload = {
     FirstName: editFirstName.value,
     LastName: editLastName.value,
     ...(newProfileImage.value && { Image: newProfileImage.value }),
-  })
+    ...(addressText.value && { Street: addressText.value }),
+    ...(selectedLat.value != null && selectedLng.value != null && {
+      Location: new GeoPoint(selectedLat.value, selectedLng.value),
+    }),
+  }
+
+  await updateDoc(userRef, updatePayload)
 
   user.value.FirstName = editFirstName.value
   user.value.LastName = editLastName.value
   editMode.value = false
+  addressSuggestions.value = []
+  showSuggestions.value = false
+}
+
+const cancelEdit = () => {
+  editMode.value = false
+  newProfileImage.value = null
+  addressSuggestions.value = []
+  showSuggestions.value = false
 }
 
 const toggleFollow = async () => {
@@ -466,6 +521,44 @@ const handleProfileImage = async (e) => {
     console.error('Upload failed:', err)
     alert('Upload failed!')
   }
+}
+
+// Nominatim address search with debounce
+const searchAddress = async (query) => {
+  if (!query || query.trim().length < 3) {
+    addressSuggestions.value = []
+    showSuggestions.value = false
+    return
+  }
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+        query,
+      )}&format=json&limit=10&addressdetails=1`,
+      { headers: { 'Accept-Language': 'en' } }
+    )
+    const data = await response.json()
+    addressSuggestions.value = data || []
+    showSuggestions.value = true
+  } catch (err) {
+    console.error('Nominatim search failed:', err)
+    addressSuggestions.value = []
+  }
+}
+
+const onAddressInput = (e) => {
+  addressText.value = e.target.value
+  clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(() => searchAddress(addressText.value), 300)
+}
+
+const selectAddress = (place) => {
+  addressText.value = place.display_name
+  selectedLat.value = parseFloat(place.lat)
+  selectedLng.value = parseFloat(place.lon)
+  addressSuggestions.value = []
+  showSuggestions.value = false
 }
 </script>
 
