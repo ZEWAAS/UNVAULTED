@@ -149,7 +149,7 @@ function goToItemPage() {
 
 function goToSellerPage() {
   if (!props.seller) return
-  router.push({ name: 'user', params: { id: props.seller.id } })
+  router.push({ name: 'profile', params: { id: props.seller.id } })
 }
 </script>
 
