@@ -65,8 +65,9 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
+import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '@/firebase/firebase-client'
 
 // Props
@@ -95,6 +96,8 @@ const userName = ref('Username')
 const userImage = ref('')
 const isLiked = ref(false)
 
+let authListener = null
+
 onMounted(async () => {
   if (props.seller) {
     const snap = await getDoc(props.seller)
@@ -105,41 +108,58 @@ onMounted(async () => {
     }
   }
 
-  const current = auth.currentUser
-  if (!current) return
+  authListener = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      const userRef = doc(db, 'Users', user.uid)
+      const userSnap = await getDoc(userRef)
 
-  const userRef = doc(db, 'Users', current.uid)
-  const userSnap = await getDoc(userRef)
+      if (userSnap.exists()) {
+        const favs = userSnap.data().Favorites || []
+        isLiked.value = favs.some((f) => f.id === props.id)
+      }
+    } else {
+      isLiked.value = false
+    }
+  })
+})
 
-  if (userSnap.exists()) {
-    const favs = userSnap.data().Favorites || []
-    isLiked.value = favs.some((f) => f.id === props.id)
-  }
+onUnmounted(() => {
+  if (authListener) authListener()
 })
 
 async function toggleLike() {
   const user = auth.currentUser
   if (!user) return
 
-  const userRef = doc(db, 'Users', user.uid)
-  const itemRef = doc(db, 'Items', props.id)
+  const previousIsLiked = isLiked.value
+  const previousCount = localLikeCount.value
 
   if (isLiked.value) {
     isLiked.value = false
     localLikeCount.value--
-
-    await updateDoc(itemRef, { Likes: localLikeCount.value })
-    await updateDoc(userRef, {
-      Favorites: arrayRemove(itemRef),
-    })
   } else {
     isLiked.value = true
     localLikeCount.value++
+  }
 
-    await updateDoc(itemRef, { Likes: localLikeCount.value })
-    await updateDoc(userRef, {
-      Favorites: arrayUnion(itemRef),
+  try {
+    const token = await user.getIdToken()
+    const response = await fetch('http://localhost:3000/api/likes/toggle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ itemId: props.id })
     })
+
+    if (!response.ok) {
+      throw new Error('Failed to toggle like')
+    }
+  } catch (error) {
+    console.error("Error toggling like:", error)
+    isLiked.value = previousIsLiked
+    localLikeCount.value = previousCount
   }
 }
 
