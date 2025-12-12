@@ -115,7 +115,7 @@ onUnmounted(() => {
         <label v-if="allLoaded" class="text-center text-gray-500">You have reached the end.</label>
         <div ref="loadTrigger" class="w-full h-10 flex justify-center items-center">
             <div v-if="loading" class="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
-        </div>x
+        </div>
       </div>
     </div>
   </main>
