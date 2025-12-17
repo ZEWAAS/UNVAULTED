@@ -1,6 +1,5 @@
 <template>
   <div class="w-full mx-auto mt-8 flex gap-4">
-    <!-- OWNER: vertical chat list -->
     <div
       v-if="isSeller"
       class="w-60 bg-white/80 backdrop-blur-md rounded-xl border border-gray-200 p-2 flex flex-col gap-2 max-h-[80vh] overflow-y-auto"
@@ -24,7 +23,6 @@
       </div>
     </div>
 
-    <!-- MAIN CHAT VIEW -->
     <div
       class="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col"
     >
@@ -51,7 +49,11 @@
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50" ref="chatContainer">
+      <div
+        v-if="chatExists"
+        class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 min-h-[40vh]"
+        ref="chatContainer"
+      >
         <div v-if="messages.length === 0" class="flex justify-center mt-10">
           <p class="text-gray-400 italic text-sm">No messages yet</p>
         </div>
@@ -75,11 +77,15 @@
           >
             {{ msg.text }}
           </div>
+          {{ msg.createdAt ? new Date(msg.createdAt.seconds * 1000).toLocaleTimeString() : '' }}
         </div>
       </div>
 
       <!-- MESSAGE INPUT -->
-      <div class="border-t border-gray-200 bg-white p-4 flex items-center gap-3 sticky bottom-0">
+      <div
+        v-if="chatExists"
+        class="border-t border-gray-200 bg-white p-4 flex items-center gap-3 sticky bottom-0"
+      >
         <input
           v-model="newMessage"
           @keyup.enter="sendMessage"
@@ -101,6 +107,7 @@
 <script setup>
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router'
+
 import { auth, db } from '@/firebase/firebase-client'
 import {
   collection,
@@ -111,6 +118,7 @@ import {
   query,
   where,
   onSnapshot,
+  orderBy,
   serverTimestamp,
   updateDoc,
 } from 'firebase/firestore'
@@ -152,6 +160,7 @@ async function loadChats() {
 
   if (props.isSeller && chats.value.length > 0) {
     openChat(chats.value[0].id)
+    chatExists.value = true
   } else if (!props.isSeller) {
     chatExists.value = chats.value.some((c) => c.participant.id === currentUserId)
     if (chatExists.value) {
@@ -169,7 +178,9 @@ function openChat(chatId) {
   messages.value = []
 
   const messagesRef = collection(db, 'Chats', chatId, 'Messages')
-  onSnapshot(messagesRef, (snap) => {
+  const q = query(messagesRef, orderBy('createdAt', 'asc'))
+
+  onSnapshot(q, (snap) => {
     messages.value = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
     nextTick(() => {
       chatContainer.value.scrollTop = chatContainer.value.scrollHeight
