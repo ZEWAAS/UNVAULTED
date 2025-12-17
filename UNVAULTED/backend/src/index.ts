@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import likesRoutes from './routes/likes';
+import searchRoutes from './routes/search';
 
 dotenv.config();
 
@@ -12,6 +13,9 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/likes', likesRoutes);
+
+app.use('/api/search', searchRoutes)
+
 
 app.get('/', (req, res) => {
   res.send('UNVAULTED Backend is running');
