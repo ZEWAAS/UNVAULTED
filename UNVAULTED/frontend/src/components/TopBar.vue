@@ -48,10 +48,10 @@
         Add Item
       </button>
 
-      <div class="relative flex" v-if="currentUser">
+      <div class="relative flex size-14" v-if="currentUser">
         <button
           @click="toggleDropdown"
-          class="rounded-full transition-transform duration-150 ease-out hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          class="rounded-full transition-transform duration-150 ease-out hover:scale-102 active:scale-98 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           aria-haspopup="menu"
           :aria-expanded="dropdown ? 'true' : 'false'"
           :aria-controls="menuId"
@@ -59,7 +59,7 @@
         >
           <img
             :src="profileImage"
-            class="size-14 rounded-full shadow-sm hover:shadow-md transition-shadow duration-150"
+            class="size-14 rounded-full shadow-sm hover:shadow-md transition-shadow duration-150 object-cover"
             alt="profile"
           />
         </button>
@@ -182,6 +182,28 @@ onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside))
 function addItem() {
   router.push('/items/new')
 }
+
+const addItemIcon = (props: any) => 
+  h(
+    'svg',
+    {
+      ...props,
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': 1.75,
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    },
+    [
+      h('path', { d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' }),
+      h('circle', { cx: 9, cy: 7, r: 4 }),
+      h('path', { d: 'M22 21v-2a4 4 0 0 0-3-3.87' }),
+      h('path', { d: 'M16 3.13a4 4 0 0 1 0 7.75' }),
+    ],
+  )
+
+  
 const HistoryIcon = (props: any) =>
   h(
     'svg',
