@@ -379,20 +379,17 @@ const loadProfile = async () => {
 
   user.value = snap.data()
   user.value.id = profileUid.value
-<<<<<<< HEAD
   addressText.value = user.value.Street || ''
   if (user.value.Location) {
     selectedLat.value = user.value.Location.latitude
     selectedLng.value = user.value.Location.longitude
   }
   following.value = user.value.Following?.includes(loggedInUid.value) || false
-=======
 
   const myRef = doc(db, 'Users', loggedInUid.value)
   const mySnap = await getDoc(myRef)
   const data = mySnap.data()
   following.value = data.Following?.includes(profileUid.value) || false
->>>>>>> main
 
   const itemsRef = collection(db, 'Items')
   const q = query(itemsRef, where('Seller', '==', profileRef))
