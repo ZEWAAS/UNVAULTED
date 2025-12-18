@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+let lastRequestTime = 0;
 
 export const nominatimProxy = async (req: Request, res: Response) => {
   const q = req.query.q as string;
@@ -12,6 +13,12 @@ export const nominatimProxy = async (req: Request, res: Response) => {
   )}&format=json&limit=10&addressdetails=1`;
 
   try {
+    const now = Date.now();
+    if (now - lastRequestTime < 1100) {
+      return res.status(429).json({ error: "Too many requests" });
+    }
+
+    lastRequestTime = now;
     const response = await fetch(url, {
       headers: {
         "User-Agent":

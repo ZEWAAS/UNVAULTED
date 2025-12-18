@@ -570,7 +570,7 @@ const searchAddress = async (query) => {
 const onAddressInput = (e) => {
   addressText.value = e.target.value
   clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(() => searchAddress(addressText.value), 300)
+  debounceTimer = setTimeout(() => searchAddress(addressText.value), 800)
 }
 
 const selectAddress = (place) => {
