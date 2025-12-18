@@ -1,16 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import './base.css';
-@import "tailwindcss";
+@import 'tailwindcss';
 @theme inline {
-  --font-inter: "Inter", system-ui, sans-serif;
+  --font-inter: 'Inter', system-ui, sans-serif;
   --font-sans: var(--font-inter);
 }
-:root { font-family: var(--default-font-family); }
+:root {
+  font-family: var(--default-font-family);
+}
 
 #app {
   font-weight: normal;
 }
-
 
 .button-outline {
   @apply text-[var(--color-gold)] rounded-xl font-semibold text-lg transition-all duration-150 border-2;
@@ -21,6 +22,7 @@
 .button-outline:hover {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-gold) 30%, transparent);
   transform: scale(calc((100% + 2px) / 100%));
+  cursor: pointer;
 }
 
 .button-solid {
@@ -32,6 +34,7 @@
 .button-solid:hover {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-gold) 40%, transparent);
   transform: scale(calc((100% + 2px) / 100%));
+  cursor: pointer;
 }
 
 a,
