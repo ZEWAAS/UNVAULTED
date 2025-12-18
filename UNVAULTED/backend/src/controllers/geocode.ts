@@ -14,8 +14,10 @@ export const nominatimProxy = async (req: Request, res: Response) => {
   try {
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "UNVAULTED (student project) <your-contact@example.com>",
-        "Accept-Language": "en",
+        "User-Agent":
+          "UNVAULTED-HTL-Dornbirn/1.0 (contact: simon.wallner@student.htl-dornbirn.at)",
+        Accept: "application/json",
+        Referer: "http://localhost:3000",
       },
     });
 
