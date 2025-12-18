@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import likesRoutes from './routes/likes';
-
+import geocodeRoutes from './routes/geocode';
 dotenv.config();
 
 const app = express();
@@ -12,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/likes', likesRoutes);
+app.use('/api/nominatim', geocodeRoutes);
 
 app.get('/', (req, res) => {
   res.send('UNVAULTED Backend is running');

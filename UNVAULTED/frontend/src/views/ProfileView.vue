@@ -551,19 +551,21 @@ const searchAddress = async (query) => {
 
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-        query,
-      )}&format=json&limit=10&addressdetails=1`,
-      { headers: { 'Accept-Language': 'en' } }
+      `http://localhost:3000/api/nominatim?q=${encodeURIComponent(query)}`
     )
+
+    if (!response.ok) throw new Error("Proxy error")
+
     const data = await response.json()
     addressSuggestions.value = data || []
     showSuggestions.value = true
   } catch (err) {
-    console.error('Nominatim search failed:', err)
+    console.error('Nominatim proxy failed:', err)
     addressSuggestions.value = []
+    showSuggestions.value = false
   }
 }
+
 
 const onAddressInput = (e) => {
   addressText.value = e.target.value
