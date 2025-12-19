@@ -10,7 +10,7 @@ export const nominatimProxy = async (req: Request, res: Response) => {
 
   const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
     q
-  )}&format=json&limit=10&addressdetails=1`;
+  )}&format=json&limit=10&addressdetails=1&email=contact@unvaulted.local`;
 
   try {
     const now = Date.now();
@@ -22,9 +22,8 @@ export const nominatimProxy = async (req: Request, res: Response) => {
     const response = await fetch(url, {
       headers: {
         "User-Agent":
-          "UNVAULTED-HTL-Dornbirn/1.0 (contact: simon.wallner@student.htl-dornbirn.at)",
+          "UNVAULTED-HTL-Dornbirn/1.0 (contact: contact@unvaulted.local)",
         Accept: "application/json",
-        Referer: "http://localhost:3000",
       },
     });
 
