@@ -21,13 +21,13 @@
         </span>
       </router-link>
       <div class="flex gap-4">
-        <a href="#" class="group relative transition-colors hover:font-semibold">
+        <router-link to="/" class="group relative transition-colors hover:font-semibold">
           <span>Main</span>
           <i
             class="pointer-events-none absolute left-0 -bottom-1 h-[2px] w-0 bg-[var(--color-accent)] transition-all duration-200 group-hover:w-full"
             aria-hidden="true"
           ></i>
-        </a>
+        </router-link>
         <a href="#" class="group relative text-gray-700 transition-colors hover:font-semibold">
           <span>Trending</span>
           <i
