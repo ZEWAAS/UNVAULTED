@@ -5,9 +5,7 @@
         <button @click="toggleEdit" class="px-4 py-1 button-solid">
           {{ editMode ? 'Save' : 'Edit Profile' }}
         </button>
-        <button v-if="editMode" @click="cancelEdit" class="px-4 py-1 button-solid">
-          Cancel
-        </button>
+        <button v-if="editMode" @click="cancelEdit" class="px-4 py-1 button-solid">Cancel</button>
       </div>
       <div v-if="loading" class="text-center text-gray-700">Loading...</div>
       <div v-else class="flex flex-col md:flex-row items-center md:items-start gap-6 w-full">
@@ -430,15 +428,23 @@ const toggleEdit = async () => {
     LastName: editLastName.value,
     ...(newProfileImage.value && { Image: newProfileImage.value }),
     ...(addressText.value && { Street: addressText.value }),
-    ...(selectedLat.value != null && selectedLng.value != null && {
-      Location: new GeoPoint(selectedLat.value, selectedLng.value),
-    }),
+    ...(selectedLat.value != null &&
+      selectedLng.value != null && {
+        Location: new GeoPoint(selectedLat.value, selectedLng.value),
+      }),
   }
 
   await updateDoc(userRef, updatePayload)
 
   user.value.FirstName = editFirstName.value
   user.value.LastName = editLastName.value
+  if (addressText.value) {
+    user.value.Street = addressText.value
+  }
+
+  if (selectedLat.value != null && selectedLng.value != null) {
+    user.value.Location = new GeoPoint(selectedLat.value, selectedLng.value)
+  }
   editMode.value = false
   addressSuggestions.value = []
   showSuggestions.value = false
@@ -551,10 +557,10 @@ const searchAddress = async (query) => {
 
   try {
     const response = await fetch(
-      `http://localhost:3000/api/nominatim?q=${encodeURIComponent(query)}`
+      `http://localhost:3000/api/nominatim?q=${encodeURIComponent(query)}`,
     )
 
-    if (!response.ok) throw new Error("Proxy error")
+    if (!response.ok) throw new Error('Proxy error')
 
     const data = await response.json()
     addressSuggestions.value = data || []
@@ -565,7 +571,6 @@ const searchAddress = async (query) => {
     showSuggestions.value = false
   }
 }
-
 
 const onAddressInput = (e) => {
   addressText.value = e.target.value
