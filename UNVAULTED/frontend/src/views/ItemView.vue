@@ -20,20 +20,23 @@
           :description="itemData.Description"
           :images="itemData.Images"
           :seller="sellerData"
-          :allow-buy="allowBuy"
-          :allow-trade="allowTrade"
+          :allowBuy="allowBuy"
+          :allowTrade="allowTrade"
         />
       </div>
 
       <div class="flex flex-row w-full px-[7.5%] gap-5" id="chat-section">
-        <ItemChat 
-            :product-id="route.params.id" 
-            :sellers="[sellerData]" 
-            :is-seller="isSeller"
+        <ItemChat
+          :product-id="route.params.id"
+          :sellerData="sellerData"
+          :is-seller="isSeller"
+          :allowBuy="allowBuy"
+          :allowTrade="allowTrade"
         />
       </div>
+      <div class="h-2"></div>
     </div>
-    
+
     <!-- Error State -->
     <div v-else class="w-full text-center py-10 text-gray-500">
       Item not found or failed to load.
@@ -60,62 +63,62 @@ const itemData = ref(null)
 const sellerData = ref(null)
 
 const isSeller = computed(() => {
-    if (!itemData.value || !auth.currentUser) return false
-    return itemData.value.Seller?.id === auth.currentUser.uid
+  if (!itemData.value || !auth.currentUser) return false
+  return itemData.value.Seller?.id === auth.currentUser.uid
 })
 
 const allowBuy = computed(() => {
-    if (!itemData.value) return false
-    const type = itemData.value.SellType
-    return (type === 0 || type === 2)
+  if (!itemData.value) return false
+  const type = itemData.value.SellType
+  return type === 0 || type === 2
 })
 
 const allowTrade = computed(() => {
-    if (!itemData.value) return false
-    const type = itemData.value.SellType
-    return (type === 1 || type === 2)
+  if (!itemData.value) return false
+  const type = itemData.value.SellType
+  return type === 1 || type === 2
 })
 
 onMounted(async () => {
-    if (isNew.value) {
-        loading.value = false
-        return
-    }
+  if (isNew.value) {
+    loading.value = false
+    return
+  }
 
-    try {
-        const itemSnap = await getDoc(doc(db, 'Items', docId))
-        if (!itemSnap.exists()) {
-            console.error("Item not found")
-            loading.value = false
-            return
-        }
-        itemData.value = itemSnap.data()
-        
-        if (itemData.value.Seller) {
-             const sellerSnap = await getDoc(itemData.value.Seller)
-             if (sellerSnap.exists()) {
-                 const s = sellerSnap.data()
-                 if (s.Reviews.length > 0) {
-                     const totalRatingValue = s.Reviews.reduce((s, r) => s + r.Rating, 0)
-                     s.rating = Math.round(totalRatingValue / s.Reviews.length)
-                 } else {
-                     s.rating = 0
-                 }
-                 sellerData.value = {
-                     ...s,
-                     id: itemData.value.Seller.id,
-                     name: `${s.FirstName} ${s.LastName}`,
-                     image: s.Image,
-                     verified: s.Verified || false,
-                     reviews: s.Reviews.length || 0,
-                     rating: s.rating || 0,
-                 }
-             }
-        }
-    } catch (e) {
-        console.error("Error loading item:", e)
-    } finally {
-        loading.value = false
+  try {
+    const itemSnap = await getDoc(doc(db, 'Items', docId))
+    if (!itemSnap.exists()) {
+      console.error('Item not found')
+      loading.value = false
+      return
     }
+    itemData.value = itemSnap.data()
+
+    if (itemData.value.Seller) {
+      const sellerSnap = await getDoc(itemData.value.Seller)
+      if (sellerSnap.exists()) {
+        const s = sellerSnap.data()
+        if (s.Reviews.length > 0) {
+          const totalRatingValue = s.Reviews.reduce((s, r) => s + r.Rating, 0)
+          s.rating = Math.round(totalRatingValue / s.Reviews.length)
+        } else {
+          s.rating = 0
+        }
+        sellerData.value = {
+          ...s,
+          id: itemData.value.Seller.id,
+          name: `${s.FirstName} ${s.LastName}`,
+          image: s.Image,
+          verified: s.Verified || false,
+          reviews: s.Reviews.length || 0,
+          rating: s.rating || 0,
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Error loading item:', e)
+  } finally {
+    loading.value = false
+  }
 })
 </script>
