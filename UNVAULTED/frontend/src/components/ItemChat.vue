@@ -20,14 +20,9 @@
             :src="chat.participantData?.Image || defaultProfile"
             class="w-10 h-10 rounded-full object-cover"
           />
-          <div class="flex flex-col">
-            <p class="truncate text-xl">
-              {{ chat.participantData?.FirstName }} {{ chat.participantData?.LastName }}
-            </p>
-            <p v-if="chat.offer?.price">{{ chat.offer.price }}</p>
-            <p v-else-if="chat.offer?.item">{{ chat.offer.item }}</p>
-            <p v-else>No Offers Yet</p>
-          </div>
+          <p class="truncate text-xl">
+            {{ chat.participantData?.FirstName }} {{ chat.participantData?.LastName }}
+          </p>
         </div>
 
         <p
@@ -61,32 +56,33 @@
         <button
           v-if="!isSeller && !chatExists"
           @click="startChat"
-          class="w-[10rem] py-3 button-outline"
+          :disabled="isCreatingChat"
+          class="w-[10rem] py-3 button-outline disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Start Chat
+          <span v-if="isCreatingChat">Loading...</span>
+          <span v-else>Start Chat</span>
         </button>
-      </div>
-      <div class="relative">
         <div
           v-if="activeChatOffer"
-          class="absolute top-2 left-2 w-fit bg-white border border-gray-200 rounded-xl shadow-xl text-sm z-10"
+          class="top-0 w-fit bg-white border border-gray-200 rounded-xl shadow-xl flex text-sm z-10"
         >
           <p
-            class="font-semibold rounded-t-xl pb-2 px-3 pt-3 text-2xl bg-[var(--color-gold)] text-white border-b border-gray-200"
+            class="font-semibold rounded-l-xl pb-2 px-3 pt-3 text-2xl bg-[var(--color-gold)] text-white border-r border-gray-200"
           >
             Current Offer
           </p>
-          <div class="flex flex-row items-center">
-            <p class="px-2">Price:</p>
+          <div class="flex flex-row px-4 py-1">
+            <div class="flex flex-col items-center">
+              <p class="px-2">Price:</p>
 
-            <p class="text-xl p-2" v-if="activeChatOffer.price">€{{ activeChatOffer.price }}</p>
+              <p class="text-xl p-1" v-if="activeChatOffer.price">€{{ activeChatOffer.price }}</p>
+            </div>
+            <div class="flex flex-col items-center" v-if="activeChatOffer.item">
+              <p class="px-2">Item:</p>
+              <p class="text-xl p-1">€{{ activeChatOffer.item }}</p>
+            </div>
+            <p v-if="activeChatOffer.item">Item trade</p>
           </div>
-          <div class="flex flex-row items-center">
-            <p class="px-2">Price:</p>
-            <p class="text-xl p-2" v-if="activeChatOffer.price">€{{ activeChatOffer.price }}</p>
-          </div>
-          <p v-if="activeChatOffer.item">Item trade</p>
-
           <button
             v-if="isSeller && !activeChatOffer.accepted"
             @click="acceptOffer"
@@ -201,6 +197,7 @@ const newMessage = ref('')
 const offerPrice = ref('')
 const chatContainer = ref(null)
 
+const isCreatingChat = ref(false)
 const chatExists = ref(false)
 
 const chatHeaderUser = computed(() =>
@@ -271,32 +268,37 @@ function openChat(id) {
   )
 }
 async function startChat() {
-  const itemRef = doc(db, 'Items', props.productId)
-  const participantRef = doc(db, 'Users', currentUserId)
+  if (isCreatingChat.value) return
+  isCreatingChat.value = true
 
-  const q = query(
-    collection(db, 'Chats'),
-    where('item', '==', itemRef),
-    where('participant', '==', participantRef),
-  )
+  try {
+    const itemRef = doc(db, 'Items', props.productId)
+    const participantRef = doc(db, 'Users', currentUserId)
 
-  const snapshot = await getDocs(q)
+    const q = query(
+      collection(db, 'Chats'),
+      where('item', '==', itemRef),
+      where('participant', '==', participantRef),
+    )
 
-  // If chat already exists, open it
-  if (!snapshot.empty) {
-    openChat(snapshot.docs[0].id)
-    return
+    const snapshot = await getDocs(q)
+
+    if (!snapshot.empty) {
+      openChat(snapshot.docs[0].id)
+      return
+    }
+
+    const refChat = await addDoc(collection(db, 'Chats'), {
+      item: itemRef,
+      participant: participantRef,
+      offer: {},
+      createdAt: serverTimestamp(),
+    })
+
+    openChat(refChat.id)
+  } finally {
+    isCreatingChat.value = false
   }
-
-  // Otherwise create it
-  const refChat = await addDoc(collection(db, 'Chats'), {
-    item: itemRef,
-    participant: participantRef,
-    offer: {},
-    createdAt: serverTimestamp(),
-  })
-
-  openChat(refChat.id)
 }
 
 async function sendMessage() {
