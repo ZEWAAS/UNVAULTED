@@ -228,29 +228,31 @@ function formatTime(ts) {
   return ts?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-async function loadChats() {
+function loadChats() {
   const q = query(collection(db, 'Chats'), where('item', '==', doc(db, 'Items', props.productId)))
 
-  const snap = await getDocs(q)
+  onSnapshot(q, async (snap) => {
+    chats.value = await Promise.all(
+      snap.docs.map(async (d) => {
+        const data = d.data()
+        const userSnap = await getDoc(data.participant)
+        return {
+          id: d.id,
+          ...data,
+          participantData: userSnap.data(),
+        }
+      }),
+    )
 
-  chats.value = await Promise.all(
-    snap.docs.map(async (d) => {
-      const data = d.data()
-      const userSnap = await getDoc(data.participant)
-      return {
-        id: d.id,
-        ...data,
-        participantData: userSnap.data(),
+    if (props.isSeller && chats.value.length && !activeChatId.value) {
+      openChat(chats.value[0].id)
+    } else if (!props.isSeller) {
+      const own = chats.value.find((c) => c.participant.id === currentUserId)
+      if (own && !activeChatId.value) {
+        openChat(own.id)
       }
-    }),
-  )
-
-  if (props.isSeller && chats.value.length) {
-    openChat(chats.value[0].id)
-  } else {
-    const own = chats.value.find((c) => c.participant.id === currentUserId)
-    if (own) openChat(own.id)
-  }
+    }
+  })
 }
 
 function openChat(id) {
@@ -268,15 +270,32 @@ function openChat(id) {
     },
   )
 }
-
 async function startChat() {
+  const itemRef = doc(db, 'Items', props.productId)
+  const participantRef = doc(db, 'Users', currentUserId)
+
+  const q = query(
+    collection(db, 'Chats'),
+    where('item', '==', itemRef),
+    where('participant', '==', participantRef),
+  )
+
+  const snapshot = await getDocs(q)
+
+  // If chat already exists, open it
+  if (!snapshot.empty) {
+    openChat(snapshot.docs[0].id)
+    return
+  }
+
+  // Otherwise create it
   const refChat = await addDoc(collection(db, 'Chats'), {
-    item: doc(db, 'Items', props.productId),
-    participant: doc(db, 'Users', currentUserId),
+    item: itemRef,
+    participant: participantRef,
     offer: {},
     createdAt: serverTimestamp(),
   })
-  loadChats()
+
   openChat(refChat.id)
 }
 
