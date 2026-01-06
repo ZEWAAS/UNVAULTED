@@ -74,13 +74,14 @@
           <div class="flex flex-row px-4 py-1">
             <div class="flex flex-col items-center">
               <p class="px-2">Price:</p>
-
-              <p class="text-xl p-1" v-if="activeChatOffer.price">€{{ activeChatOffer.price }}</p>
+              <p class="text-xl p-1">€{{ activeChatOffer.price ?? 0 }}</p>
             </div>
+
             <div class="flex flex-col items-center">
               <p class="px-2">Item-Value:</p>
-              <p class="text-xl p-1" v-if="activeChatOffer.item">€{{ activeChatOffer.item }}</p>
+              <p class="text-xl p-1">€{{ totalItemValue ?? 0 }}</p>
             </div>
+
             <p v-if="activeChatOffer.item">Item trade</p>
           </div>
           <button
@@ -264,17 +265,13 @@ const chatHeaderName = computed(() =>
 
 const activeChatOffer = computed(() => activeChat.value?.offer || {})
 
-const totalOfferValue = computed(() => {
-  let total = Number(offerPrice.value || 0)
+const totalItemValue = computed(() => {
+  if (!activeChatOffer.value?.items?.length) return 0
 
-  if (activeChat.value?.offer?.items?.length) {
-    activeChat.value.offer.items.forEach((itemRef) => {
-      const item = userItems.value.find((i) => i.isEqual(itemRef))
-      if (item) total += Number(item.Price || 0)
-    })
-  }
-
-  return total
+  return activeChatOffer.value.items.reduce((sum, itemRef) => {
+    const item = userItems.value.find((i) => i.id === itemRef.id)
+    return sum + Number(item?.Value || 0)
+  }, 0)
 })
 
 async function offerSelectedItems() {
@@ -462,7 +459,11 @@ async function sendMessage() {
 
 async function updateOffer() {
   await updateDoc(doc(db, 'Chats', activeChatId.value), {
-    offer: { ...activeChat.value.offer, price: Number(offerPrice.value || 0), accepted: false },
+    offer: {
+      ...activeChat.value.offer,
+      price: Number(Math.max(offerPrice.value, 0) || 0),
+      accepted: false,
+    },
   })
 }
 
