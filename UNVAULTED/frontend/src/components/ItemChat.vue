@@ -317,7 +317,7 @@ async function toggleOfferedItem(itemId) {
 }
 
 async function toggleWantedItem(itemId) {
-  if (!activeChatId.value || !isSeller) return
+  if (!activeChatId.value || !props.isSeller) return
 
   const itemRef = userItems.value.find((i) => i.id === itemId)?.ref
   if (!itemRef) return
@@ -334,9 +334,11 @@ async function toggleWantedItem(itemId) {
 }
 
 // --- LOAD BUYER ITEMS ---
-async function loadUserItems() {
-  if (!currentUserId) return
-  const profileRef = doc(db, 'Users', currentUserId)
+async function loadUserItems(userId) {
+  if (!userId) return
+
+  const profileRef = doc(db, 'Users', userId)
+
   const itemsSnap = await getDocs(query(collection(db, 'Items'), where('Seller', '==', profileRef)))
 
   userItems.value = itemsSnap.docs
@@ -377,10 +379,17 @@ function loadChats() {
   })
 }
 
-function openChat(id) {
+async function openChat(id) {
   activeChatId.value = id
   activeChat.value = chats.value.find((c) => c.id === id)
   chatExists.value = true
+
+  // 🔑 determine whose items to load
+  const itemsOwnerId = props.isSeller
+    ? activeChat.value.participant.id // buyer items
+    : currentUserId // buyer viewing own items
+
+  await loadUserItems(itemsOwnerId)
 
   // messages
   onSnapshot(
@@ -461,8 +470,7 @@ async function acceptOffer() {
   await updateDoc(doc(db, 'Chats', activeChatId.value), { 'offer.accepted': true })
 }
 
-onMounted(async () => {
+onMounted(() => {
   loadChats()
-  await loadUserItems()
 })
 </script>
