@@ -156,14 +156,14 @@
         </button>
       </div>
 
-      <div class="overflow-x-auto flex gap-4 mt-2 pb-2 px-3" v-if="activeChat && showItems">
+      <div class="overflow-x-auto flex gap-4 mt-2 pb-2 pt-2 px-3" v-if="activeChat && showItems">
         <div
           v-for="item in userItems"
           :key="item.id"
           class="w-fit border rounded-lg p-2 relative cursor-pointer"
           :class="{
-            'outline outline-2 outline-gray-500': wantedItemsMap[item.id],
-            'outline outline-2 outline-green-500': !isSeller && offeredItemsMap[item.id],
+            'outline outline-3 outline-green-500': offeredItemsMap[item.id],
+            'outline outline-5 outline-gray-500': wantedItemsMap[item.id],
           }"
           @click="isSeller ? toggleWantedItem(item.id) : toggleOfferedItem(item.id)"
         >
