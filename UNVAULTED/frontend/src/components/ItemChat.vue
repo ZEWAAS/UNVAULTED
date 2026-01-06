@@ -63,7 +63,7 @@
           <span v-else>Start Chat</span>
         </button>
         <div
-          v-if="activeChatOffer"
+          v-if="activeChatOffer && activeChat"
           class="top-0 w-fit bg-white border border-gray-200 rounded-xl shadow-xl flex text-sm z-10"
         >
           <p
@@ -77,14 +77,18 @@
 
               <p class="text-xl p-1" v-if="activeChatOffer.price">€{{ activeChatOffer.price }}</p>
             </div>
-            <div class="flex flex-col items-center" v-if="activeChatOffer.item">
-              <p class="px-2">Item:</p>
-              <p class="text-xl p-1">€{{ activeChatOffer.item }}</p>
+            <div class="flex flex-col items-center">
+              <p class="px-2">Item-Value:</p>
+              <p class="text-xl p-1" v-if="activeChatOffer.item">€{{ activeChatOffer.item }}</p>
             </div>
             <p v-if="activeChatOffer.item">Item trade</p>
           </div>
           <button
-            v-if="isSeller && !activeChatOffer.accepted"
+            v-if="
+              isSeller &&
+              !activeChatOffer.accepted &&
+              (activeChatOffer.price || activeChatOffer.item)
+            "
             @click="acceptOffer"
             class="mt-2 text-xs button-solid"
           >
@@ -129,17 +133,60 @@
           </div>
         </div>
       </div>
-      <div
-        v-if="chatExists && !isSeller && allowBuy"
-        class="p-3 border-t border-gray-200 bg-white flex gap-2"
-      >
+      <div v-if="chatExists && allowBuy" class="p-3 border-t border-gray-200 bg-white flex gap-2">
         <input
           v-model="offerPrice"
+          v-if="!isSeller"
           type="number"
           placeholder="€ Offer"
           class="flex-1 border rounded-lg px-3 py-1 text-sm"
         />
-        <button @click="updateOffer" class="button-outline text-sm">Update Offer</button>
+        <button @click="updateOffer" v-if="!isSeller" class="button-outline text-sm w-[25%]">
+          Update Offer
+        </button>
+        <button
+          @click="showItems = !showItems"
+          :class="{
+            'w-[50%] flex-1 text-center': true,
+            'button-outline': !showItems,
+            'button-solid': showItems,
+          }"
+        >
+          {{ !isSeller ? 'Offer Items' : 'Request Items' }}
+        </button>
+      </div>
+
+      <div class="overflow-x-auto flex gap-4 mt-2 pb-2 px-3" v-if="activeChat && showItems">
+        <div
+          v-for="item in userItems"
+          :key="item.id"
+          class="w-fit border rounded-lg p-2 relative cursor-pointer"
+          :class="{
+            'outline outline-2 outline-gray-500': wantedItemsMap[item.id],
+            'outline outline-2 outline-green-500': !isSeller && offeredItemsMap[item.id],
+          }"
+          @click="isSeller ? toggleWantedItem(item.id) : toggleOfferedItem(item.id)"
+        >
+          <ItemComponent
+            :key="item.id"
+            :id="item.id"
+            :title="item.Title"
+            :price="item.Price"
+            :image="item.Images?.[0] || ''"
+            :seller="item.Seller"
+            :likeCount="item.Likes"
+            :sellType="item.SellType === 0 ? 'Sell' : item.SellType === 1 ? 'Trade' : 'Sell/Trade'"
+            :is-liked="false"
+            class="shrink-0"
+          />
+          <input
+            v-if="!isSeller"
+            type="checkbox"
+            class="absolute top-2 right-2 w-5 h-5"
+            :checked="offeredItemsMap[item.id]"
+            @change="toggleOfferedItem(item.id)"
+          />
+        </div>
       </div>
 
       <!-- MESSAGE INPUT -->
@@ -163,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, watch } from 'vue'
 import {
   collection,
   doc,
@@ -179,6 +226,7 @@ import {
 } from 'firebase/firestore'
 import { auth, db } from '@/firebase/firebase-client'
 import defaultProfile from '@/assets/defaultProfile.jpg'
+import ItemComponent from './ItemComponent.vue'
 
 const props = defineProps({
   productId: String,
@@ -196,9 +244,15 @@ const activeChat = ref(null)
 const newMessage = ref('')
 const offerPrice = ref('')
 const chatContainer = ref(null)
+const userItems = ref([])
 
-const isCreatingChat = ref(false)
+const offeredItemsMap = ref({}) // buyer offered items
+const wantedItemsMap = ref({}) // seller wanted items
+
+const loadingOffer = ref(false)
+const showItems = ref(false)
 const chatExists = ref(false)
+const isCreatingChat = ref(false)
 
 const chatHeaderUser = computed(() =>
   props.isSeller ? activeChat.value?.participantData : props.sellerData,
@@ -208,46 +262,117 @@ const chatHeaderName = computed(() =>
   chatHeaderUser.value ? `${chatHeaderUser.value.FirstName} ${chatHeaderUser.value.LastName}` : '',
 )
 
-const activeChatOffer = computed(() => activeChat.value?.offer || null)
+const activeChatOffer = computed(() => activeChat.value?.offer || {})
 
+const totalOfferValue = computed(() => {
+  let total = Number(offerPrice.value || 0)
+
+  if (activeChat.value?.offer?.items?.length) {
+    activeChat.value.offer.items.forEach((itemRef) => {
+      const item = userItems.value.find((i) => i.isEqual(itemRef))
+      if (item) total += Number(item.Price || 0)
+    })
+  }
+
+  return total
+})
+
+async function offerSelectedItems() {
+  if (!activeChatId.value) return
+  loadingOffer.value = true
+  console.log(selectedItemsMap.value)
+  try {
+    const itemsToOffer = Object.keys(selectedItemsMap.value)
+      .filter((id) => selectedItemsMap.value[id])
+      .map((id) => userItems.value.find((i) => i.id === id).ref)
+
+    await updateDoc(doc(db, 'Chats', activeChatId.value), {
+      offer: {
+        ...activeChat.value.offer,
+        items: itemsToOffer,
+        accepted: false,
+      },
+    })
+  } finally {
+    loadingOffer.value = false
+  }
+}
+
+async function toggleOfferedItem(itemId) {
+  if (!activeChatId.value) return
+
+  const itemRef = userItems.value.find((i) => i.id === itemId)?.ref
+  if (!itemRef) return
+
+  const current = activeChat.value.offer.items || []
+
+  const exists = current.some((ref) => ref.id === itemId)
+
+  const updated = exists ? current.filter((ref) => ref.id !== itemId) : [...current, itemRef]
+
+  await updateDoc(doc(db, 'Chats', activeChatId.value), {
+    'offer.items': updated,
+    'offer.accepted': false,
+  })
+}
+
+async function toggleWantedItem(itemId) {
+  if (!activeChatId.value || !isSeller) return
+
+  const itemRef = userItems.value.find((i) => i.id === itemId)?.ref
+  if (!itemRef) return
+
+  const current = activeChat.value.offer.wanted || []
+
+  const exists = current.some((ref) => ref.id === itemId)
+
+  const updated = exists ? current.filter((ref) => ref.id !== itemId) : [...current, itemRef]
+
+  await updateDoc(doc(db, 'Chats', activeChatId.value), {
+    'offer.wanted': updated,
+  })
+}
+
+// --- LOAD BUYER ITEMS ---
+async function loadUserItems() {
+  if (!currentUserId) return
+  const profileRef = doc(db, 'Users', currentUserId)
+  const itemsSnap = await getDocs(query(collection(db, 'Items'), where('Seller', '==', profileRef)))
+
+  userItems.value = itemsSnap.docs
+    .map((d) => ({ id: d.id, ref: d.ref, ...d.data() }))
+    .filter((item) => item.SellType !== 0)
+}
+
+// --- CHAT FUNCTIONS ---
 function isNewDay(i) {
   if (i === 0) return true
   const a = messages.value[i - 1].createdAt?.toDate()
   const b = messages.value[i].createdAt?.toDate()
   return a?.toDateString() !== b?.toDateString()
 }
-
 function formatDay(ts) {
   return ts?.toDate().toLocaleDateString()
 }
-
 function formatTime(ts) {
   return ts?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 function loadChats() {
   const q = query(collection(db, 'Chats'), where('item', '==', doc(db, 'Items', props.productId)))
-
   onSnapshot(q, async (snap) => {
     chats.value = await Promise.all(
       snap.docs.map(async (d) => {
         const data = d.data()
         const userSnap = await getDoc(data.participant)
-        return {
-          id: d.id,
-          ...data,
-          participantData: userSnap.data(),
-        }
+        return { id: d.id, ...data, participantData: userSnap.data() }
       }),
     )
 
-    if (props.isSeller && chats.value.length && !activeChatId.value) {
-      openChat(chats.value[0].id)
-    } else if (!props.isSeller) {
+    if (props.isSeller && chats.value.length && !activeChatId.value) openChat(chats.value[0].id)
+    else if (!props.isSeller) {
       const own = chats.value.find((c) => c.participant.id === currentUserId)
-      if (own && !activeChatId.value) {
-        openChat(own.id)
-      }
+      if (own && !activeChatId.value) openChat(own.id)
     }
   })
 }
@@ -257,6 +382,7 @@ function openChat(id) {
   activeChat.value = chats.value.find((c) => c.id === id)
   chatExists.value = true
 
+  // messages
   onSnapshot(
     query(collection(db, 'Chats', id, 'Messages'), orderBy('createdAt', 'asc')),
     (snap) => {
@@ -266,35 +392,49 @@ function openChat(id) {
       })
     },
   )
+
+  // live offer updates
+  onSnapshot(doc(db, 'Chats', id), (snap) => {
+    if (!snap.exists()) return
+
+    activeChat.value.offer = snap.data().offer || {}
+
+    // --- BUYER OFFERED ITEMS ---
+    offeredItemsMap.value = {}
+    ;(activeChat.value.offer.items || []).forEach((ref) => {
+      offeredItemsMap.value[ref.id] = true
+    })
+
+    // --- SELLER WANTED ITEMS ---
+    wantedItemsMap.value = {}
+    ;(activeChat.value.offer.wanted || []).forEach((ref) => {
+      wantedItemsMap.value[ref.id] = true
+    })
+  })
 }
+
 async function startChat() {
   if (isCreatingChat.value) return
   isCreatingChat.value = true
-
   try {
     const itemRef = doc(db, 'Items', props.productId)
     const participantRef = doc(db, 'Users', currentUserId)
-
     const q = query(
       collection(db, 'Chats'),
       where('item', '==', itemRef),
       where('participant', '==', participantRef),
     )
-
     const snapshot = await getDocs(q)
-
     if (!snapshot.empty) {
       openChat(snapshot.docs[0].id)
       return
     }
-
     const refChat = await addDoc(collection(db, 'Chats'), {
       item: itemRef,
       participant: participantRef,
       offer: {},
       createdAt: serverTimestamp(),
     })
-
     openChat(refChat.id)
   } finally {
     isCreatingChat.value = false
@@ -313,18 +453,16 @@ async function sendMessage() {
 
 async function updateOffer() {
   await updateDoc(doc(db, 'Chats', activeChatId.value), {
-    offer: {
-      price: offerPrice.value,
-      accepted: false,
-    },
+    offer: { ...activeChat.value.offer, price: Number(offerPrice.value || 0), accepted: false },
   })
 }
 
 async function acceptOffer() {
-  await updateDoc(doc(db, 'Chats', activeChatId.value), {
-    'offer.accepted': true,
-  })
+  await updateDoc(doc(db, 'Chats', activeChatId.value), { 'offer.accepted': true })
 }
 
-onMounted(loadChats)
+onMounted(async () => {
+  loadChats()
+  await loadUserItems()
+})
 </script>

@@ -51,7 +51,7 @@
         class="rounded-xl overflow-hidden h-full w-full object-cover border border-[var(--color-border)]"
         alt="product image"
       />
-    </div>
+    </div>  
 
     <div class="flex flex-col description-container">
       <span class="text-2xl font-bold line-clamp-2 h-16">{{ localTitle }}</span>
