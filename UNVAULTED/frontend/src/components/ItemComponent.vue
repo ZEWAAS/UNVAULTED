@@ -69,6 +69,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth, db } from '@/firebase/firebase-client'
+import { calculateDistance } from '@/scripts/geo.js'
 
 // Props
 const props = defineProps({
@@ -99,13 +100,11 @@ const isLiked = ref(false)
 let authListener = null
 
 onMounted(async () => {
+  // console.log(props.seller)
   if (props.seller) {
-    const snap = await getDoc(props.seller)
-    if (snap.exists()) {
-      const data = snap.data()
+      const data = props.seller
       userName.value = `${data.FirstName} ${data.LastName}`
       userImage.value = data.Image || '../assets/defaultProfile.jpg'
-    }
   }
 
   authListener = onAuthStateChanged(auth, async (user) => {
@@ -114,11 +113,27 @@ onMounted(async () => {
       const userSnap = await getDoc(userRef)
 
       if (userSnap.exists()) {
-        const favs = userSnap.data().Favorites || []
+        const userData = userSnap.data()
+        const favs = userData.Favorites || []
         isLiked.value = favs.some((f) => f.id === props.id)
+
+        // Calculate distance if not provided via props (or override it?)
+        // If we want dynamic calculation based on current user:
+        if (userData.Location && props.seller && props.seller.Location) {
+             const userLat = userData.Location._latitude || userData.Location.latitude;
+             const userLng = userData.Location._longitude || userData.Location.longitude;
+             const sellerLat = props.seller.Location._latitude || props.seller.Location.latitude;
+             const sellerLng = props.seller.Location._longitude || props.seller.Location.longitude;
+             
+             const dist = calculateDistance(userLat, userLng, sellerLat, sellerLng);
+             if (dist !== null) {
+                 localDistance.value = dist;
+             }
+        }
       }
     } else {
       isLiked.value = false
+      localDistance.value = null // Or keep prop value?
     }
   })
 })

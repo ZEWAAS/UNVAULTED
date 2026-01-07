@@ -1,5 +1,5 @@
 <template>
-  <aside class="w-72 select-none">
+  <aside class="w-72 select-none h-fit">
     <div
       class="flex flex-col rounded-2xl border border-[var(--color-border)] bg-white/60 overflow-hidden"
     >
@@ -7,72 +7,85 @@
           <div class="w-2"></div>
           <img src="../assets/filter.svg" class="size-5 text-white shrink-0" />
           <span class="text-[15px] leading-[1em]">Filters</span>
+          <div class="flex-grow"></div>
+          <button @click="resetFilters" class="text-xs text-blue-500 hover:text-blue-700">Reset</button>
       </div>
 
       <div class="px-4 py-3 space-y-5">
+        <!-- Sort By -->
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-gray-700">Price Range</span>
-            <span class="text-xs text-gray-600">${{ priceRange[0] }}–${{ priceRange[1] }}</span>
+            <span class="text-sm text-gray-700 block mb-2">Sort By</span>
+            <select v-model="sortBy" class="w-full text-sm border border-gray-300 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="popular">Popular</option>
+                <option value="new">Newest</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+            </select>
+        </div>
+
+        <!-- Price -->
+        <div>
+          <span class="text-sm text-gray-700 block mb-2">Price Range (€)</span>
+          <div class="flex items-center gap-2">
+            <input 
+                v-model="priceMin" 
+                type="number" 
+                placeholder="Min" 
+                class="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <span class="text-gray-400">-</span>
+            <input 
+                v-model="priceMax" 
+                type="number" 
+                placeholder="Max" 
+                class="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
           </div>
-          <Slider
-            v-model="priceRange"
-            :min="0"
-            :max="100"
-            :step="1"
-            :tooltip="'always'"
-            :range="true"
-            class="w-full"
+        </div>
+
+        <!-- Distance -->
+        <div>
+          <span class="text-sm text-gray-700 block mb-2">Max Distance (km)</span>
+          <input 
+              v-model="distance" 
+              type="number" 
+              placeholder="Distance (km)" 
+              class="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
+        <!-- Rating -->
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-gray-700">Distance</span>
-            <span class="text-xs text-gray-600">{{ distance }} km</span>
-          </div>
-            <Slider
-              v-model="distance"
-              :min="0"
-              :max="200"
-              :step="1"
-              :tooltip="'none'"
-              class="w-full"
+          <span class="text-sm text-gray-700 block mb-2">Min Rating (1-5)</span>
+             <input 
+                v-model="rating" 
+                type="number" 
+                placeholder="Stars (1-5)" 
+                min="1"
+                max="5"
+                class="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
+            <span class="i-lucide-star size-4 text-yellow-400"></span>
         </div>
 
+        <!-- Views -->
         <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-gray-700">Seller Rating</span>
-            <span class="text-xs text-gray-600 flex items-center gap-1">
-              {{ rating }}<span class="i-lucide-star size-3 text-yellow-400"></span>
-            </span>
-          </div>
-            <Slider
-              v-model="rating"
-              :min="1"
-              :max="5"
-              :step="1"
-              class="w-full"
+          <span class="text-sm text-gray-700 block mb-2">Likes</span>
+          <div class="flex items-center gap-2">
+            <input 
+                v-model="viewsMin" 
+                type="number" 
+                placeholder="Min" 
+                class="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-sm text-gray-700">Views</span>
-            <span class="text-xs text-gray-600">
-              {{ viewsRange[0] }}–{{ viewsRange[1] }} <span class="i-lucide-eye size-3 inline-block"></span>
-            </span>
+            <span class="text-gray-400">-</span>
+            <input 
+                v-model="viewsMax" 
+                type="number" 
+                placeholder="Max" 
+                class="w-full text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
           </div>
-          <Slider
-            v-model="viewsRange"
-            :min="0"
-            :max="viewsMax"
-            :step="10"
-            tooltip="none"
-            :range="true"
-            class="w-full"
-          />
         </div>
       </div>
 
@@ -91,18 +104,34 @@
       </div>
 
       <div class="divide-y divide-[var(--color-border,#E5E7EB)]">
-        <button class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50">
+        <button 
+            @click="toggleCategory('Hardware')"
+            :class="{'bg-blue-50': selectedCategories.includes('Hardware')}"
+            class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50"
+        >
           <span class="text-sm text-gray-800">Hardware</span>
         </button>
-        <button class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50">
+        <button 
+            @click="toggleCategory('Clothes')"
+            :class="{'bg-blue-50': selectedCategories.includes('Clothes')}"
+            class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50"
+        >
           <span class="text-sm text-gray-800">Clothes</span>
           <span class="i-lucide-chevron-right size-4 text-gray-500" />
         </button>
-        <button class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50">
+        <button 
+            @click="toggleCategory('Furniture')"
+            :class="{'bg-blue-50': selectedCategories.includes('Furniture')}"
+            class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50"
+        >
           <span class="text-sm text-gray-800">Furniture</span>
           <span class="i-lucide-chevron-right size-4 text-gray-500" />
         </button>
-        <button class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50">
+        <button 
+            @click="toggleCategory('Entertainment')"
+            :class="{'bg-blue-50': selectedCategories.includes('Entertainment')}"
+            class="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-gray-50"
+        >
           <span class="text-sm text-gray-800">Entertainment</span>
           <span class="i-lucide-chevron-right size-4 text-gray-500" />
         </button>
@@ -112,20 +141,56 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import Slider from '@vueform/slider'
-import '@vueform/slider/themes/default.css'
+import { ref, watch } from 'vue'
 
-const priceRange = ref([0, 100])
-const distance = ref(200)
-const rating = ref(5)
-const viewsMax = 1500
-const viewsRange = ref([0, viewsMax])
-</script>
+const emit = defineEmits(['change'])
 
-<style scoped>
-.vue-slider .vue-slider-dot-tooltip,
-.vue-slider .vue-slider-dot-tooltip-inner {
-  display: none !important;
+const sortBy = ref('popular')
+const priceMin = ref(null)
+const priceMax = ref(null)
+const distance = ref(null)
+const rating = ref(null)
+const viewsMin = ref(null)
+const viewsMax = ref(null)
+const selectedCategories = ref<string[]>([])
+
+const toggleCategory = (category: string) => {
+    if (selectedCategories.value.includes(category)) {
+        selectedCategories.value = selectedCategories.value.filter(c => c !== category)
+    } else {
+        selectedCategories.value.push(category)
+    }
 }
-</style>
+
+const resetFilters = () => {
+    sortBy.value = 'popular'
+    priceMin.value = null
+    priceMax.value = null
+    distance.value = null
+    rating.value = null
+    viewsMin.value = null
+    viewsMax.value = null
+    selectedCategories.value = []
+}
+
+
+let timeout: NodeJS.Timeout
+
+const emitChange = () => {
+    clearTimeout(timeout)
+    timeout = setTimeout(() => {
+        emit('change', {
+            sortBy: sortBy.value,
+            priceMin: priceMin.value,
+            priceMax: priceMax.value,
+            maxSellerDistance: distance.value,
+            minRating: rating.value,
+            viewsMin: viewsMin.value,
+            viewsMax: viewsMax.value,
+            categories: selectedCategories.value
+        })
+    }, 500)
+}
+
+watch([sortBy, priceMin, priceMax, distance, rating, viewsMin, viewsMax, selectedCategories], emitChange, { deep: true })
+</script>

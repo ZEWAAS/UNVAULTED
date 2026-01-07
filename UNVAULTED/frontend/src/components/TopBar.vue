@@ -42,16 +42,18 @@
       <input
         type="text"
         placeholder="Search..."
+        v-model="searchQuery"
+        @input="handleSearch"
         class="rounded-full px-4 py-1.5 border border-[var(--color-border)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white w-72"
       />
       <button v-if="currentUser" @click="addItem" class="w-[10rem] button-outline py-1">
         Add Item
       </button>
 
-      <div class="relative flex" v-if="currentUser">
+      <div class="relative flex size-14" v-if="currentUser">
         <button
           @click="toggleDropdown"
-          class="rounded-full transition-transform duration-150 ease-out hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+          class="rounded-full transition-transform duration-150 ease-out hover:scale-102 active:scale-98 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           aria-haspopup="menu"
           :aria-expanded="dropdown ? 'true' : 'false'"
           :aria-controls="menuId"
@@ -59,7 +61,7 @@
         >
           <img
             :src="profileImage"
-            class="size-14 rounded-full shadow-sm hover:shadow-md transition-shadow duration-150"
+            class="size-14 rounded-full shadow-sm hover:shadow-md transition-shadow duration-150 object-cover"
             alt="profile"
           />
         </button>
@@ -129,8 +131,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, h, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onBeforeUnmount, h, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { auth, db } from '@/firebase/firebase-client.js'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
@@ -138,9 +140,37 @@ import { doc, getDoc } from 'firebase/firestore'
 const dropdown = ref(false)
 const menuId = 'profile-menu'
 const router = useRouter()
+const route = useRoute()
 const currentUser = ref(null)
 import defaultProfile from '@/assets/defaultProfile.jpg'
 const profileImage = ref(defaultProfile)
+const searchQuery = ref('')
+let searchTimeout: ReturnType<typeof setTimeout>
+
+// Sync input with URL query on mount and route changes
+watch(
+  () => route.query.q,
+  (newQuery) => {
+    if (newQuery !== searchQuery.value) {
+      searchQuery.value = (newQuery as string) || ''
+    }
+  },
+  { immediate: true }
+)
+
+const handleSearch = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    const query = searchQuery.value
+    if (query) {
+      router.push({ name: 'home', query: { ...route.query, q: query } })
+    } else {
+      const newQuery = { ...route.query }
+      delete newQuery.q
+      router.push({ name: 'home', query: newQuery })
+    }
+  }, 300)
+}
 
 function toggleDropdown() {
   if (!currentUser.value) return
@@ -182,6 +212,28 @@ onBeforeUnmount(() => window.removeEventListener('click', handleClickOutside))
 function addItem() {
   router.push('/items/new')
 }
+
+const addItemIcon = (props: any) => 
+  h(
+    'svg',
+    {
+      ...props,
+      viewBox: '0 0 24 24',
+      fill: 'none',
+      stroke: 'currentColor',
+      'stroke-width': 1.75,
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    },
+    [
+      h('path', { d: 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2' }),
+      h('circle', { cx: 9, cy: 7, r: 4 }),
+      h('path', { d: 'M22 21v-2a4 4 0 0 0-3-3.87' }),
+      h('path', { d: 'M16 3.13a4 4 0 0 1 0 7.75' }),
+    ],
+  )
+
+  
 const HistoryIcon = (props: any) =>
   h(
     'svg',
