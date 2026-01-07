@@ -155,7 +155,7 @@
                 :title="item.Title"
                 :price="item.Price"
                 :image="item.Images?.[0] || ''"
-                :seller="item.Seller"
+                :seller="user"
                 :likeCount="item.Likes"
                 :sellType="
                   item.SellType === 0 ? 'Sell' : item.SellType === 1 ? 'Trade' : 'Sell/Trade'
@@ -313,7 +313,6 @@ import { uploadSingleFile } from '@/scripts/cloudinary'
 import ItemComponent from '../components/ItemComponent.vue'
 import ReviewComponent from '@/components/ReviewComponent.vue'
 import defaultProfile from '@/assets/defaultProfile.jpg'
-import { arrayUnion, arrayRemove } from 'firebase/firestore'
 
 const router = useRouter()
 const route = useRoute()
@@ -338,7 +337,6 @@ const profileUid = ref(null)
 const following = ref(false)
 const newProfileImage = ref(null)
 
-// Address / Nominatim
 const addressText = ref('')
 const addressSuggestions = ref([])
 const showSuggestions = ref(false)
@@ -516,7 +514,6 @@ const deleteReview = async () => {
 
 onMounted(loadProfile)
 
-// Watch route param to reload profile when navigating to other profile
 watch(
   () => route.params.id,
   async (newId, oldId) => {

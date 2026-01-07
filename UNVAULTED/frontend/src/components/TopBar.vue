@@ -42,6 +42,8 @@
       <input
         type="text"
         placeholder="Search..."
+        v-model="searchQuery"
+        @input="handleSearch"
         class="rounded-full px-4 py-1.5 border border-[var(--color-border)] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-white w-72"
       />
       <button v-if="currentUser" @click="addItem" class="w-[10rem] button-outline py-1">
@@ -129,8 +131,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, h, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onBeforeUnmount, h, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { auth, db } from '@/firebase/firebase-client.js'
 import { signOut, onAuthStateChanged } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
@@ -138,9 +140,37 @@ import { doc, getDoc } from 'firebase/firestore'
 const dropdown = ref(false)
 const menuId = 'profile-menu'
 const router = useRouter()
+const route = useRoute()
 const currentUser = ref(null)
 import defaultProfile from '@/assets/defaultProfile.jpg'
 const profileImage = ref(defaultProfile)
+const searchQuery = ref('')
+let searchTimeout: ReturnType<typeof setTimeout>
+
+// Sync input with URL query on mount and route changes
+watch(
+  () => route.query.q,
+  (newQuery) => {
+    if (newQuery !== searchQuery.value) {
+      searchQuery.value = (newQuery as string) || ''
+    }
+  },
+  { immediate: true }
+)
+
+const handleSearch = () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    const query = searchQuery.value
+    if (query) {
+      router.push({ name: 'home', query: { ...route.query, q: query } })
+    } else {
+      const newQuery = { ...route.query }
+      delete newQuery.q
+      router.push({ name: 'home', query: newQuery })
+    }
+  }, 300)
+}
 
 function toggleDropdown() {
   if (!currentUser.value) return

@@ -13,7 +13,6 @@ function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon
     ; 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
   const d = R * c; 
-  console.log(d);
   return d;
 }
 
@@ -114,9 +113,9 @@ export const search = async (req: Request, res: Response) => {
             return avg >= minR;
         });
     }
-
     if (maxSellerDistance) {
         const authHeader = req.headers.authorization;
+        console.log("Auth header:", req.headers);
         if (authHeader && authHeader.startsWith('Bearer ')) {
              const token = authHeader.split(' ')[1];
              try {
@@ -128,7 +127,6 @@ export const search = async (req: Request, res: Response) => {
                     const userLat = userData.Location._latitude || userData.Location.latitude;
                     const userLng = userData.Location._longitude || userData.Location.longitude;
                     const maxDist = Number(maxSellerDistance);
-
                     results = results.filter(item => {
                         if (!item.Seller) return false;
                         const sellerData = sellersCache.get(item.Seller.id);
@@ -168,7 +166,36 @@ export const search = async (req: Request, res: Response) => {
         });
     }
 
-    res.json(results);
+    // Pagination
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+
+    const paginatedResults = results.slice(startIndex, endIndex).map(item => {
+        let sellerData = null;
+        if (item.Seller) {
+            // item.Seller is a DocumentReference in the raw data, so it has .id
+            const sid = item.Seller.id;
+            const sData = sellersCache.get(sid);
+            if (sData) {
+                sellerData = { 
+                    id: sid, 
+                    FirstName: sData.FirstName, 
+                    LastName: sData.LastName, 
+                    Image: sData.Image,
+                    Location: sData.Location
+                    // Add other needed fields if necessary
+                };
+            }
+        }
+        return {
+            ...item,
+            Seller: sellerData
+        };
+    });
+
+    res.json(paginatedResults);
     
   } catch (error: any) {
     console.error("Search error:", error);
