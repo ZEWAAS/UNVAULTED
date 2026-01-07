@@ -104,7 +104,7 @@
       <div
         v-if="chatExists"
         ref="chatContainer"
-        class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 max-h-[60vh] min-h-[40vh]"
+        class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 max-h-[60vh] min-h-[40vh] gap-1 flex flex-col"
       >
         <div v-for="(msg, i) in messages" :key="msg.id">
           <!-- DAY SEPARATOR -->
