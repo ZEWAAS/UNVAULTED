@@ -115,7 +115,6 @@ export const search = async (req: Request, res: Response) => {
     }
     if (maxSellerDistance) {
         const authHeader = req.headers.authorization;
-        console.log("Auth header:", req.headers);
         if (authHeader && authHeader.startsWith('Bearer ')) {
              const token = authHeader.split(' ')[1];
              try {
