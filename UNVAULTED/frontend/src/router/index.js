@@ -18,6 +18,12 @@ const routes = [
   { path: '/profile/:id', name: 'profile', component: () => import('../views/ProfileView.vue') },
   { path: '/signup', name: 'signup', component: () => import('../views/SignupView.vue') },
   { path: '/following', name: 'following', component: () => import('../views/FollowingView.vue') },
+  {
+    path: '/favorites',
+    name: 'favorites',
+    component: () => import('../views/FavoritesView.vue'),
+  },
+
   { path: '/items/:id', name: 'items', component: () => import('../views/ItemView.vue') },
 ]
 
