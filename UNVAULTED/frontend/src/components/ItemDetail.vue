@@ -86,7 +86,7 @@
 
         <div class="flex gap-3">
           <button
-            v-if="allowBuy"
+            v-if="allowBuy && !isItemOwner"
             @click="buyItem"
             class="flex-1 button-solid py-3"
           >
@@ -94,7 +94,7 @@
           </button>
 
           <button
-            v-if="allowTrade"
+            v-if="allowTrade && !isItemOwner"
             @click="tradeItem"
             class="flex-1 button-outline py-3"
           >
@@ -102,11 +102,14 @@
           </button>
 
           <p
-            v-if="!allowBuy && !allowTrade"
+            v-if="!allowBuy && !allowTrade && !isItemOwner"
             class="text-center w-full text-gray-500 italic mt-3"
           >
             No options available
           </p>
+          <button v-if="isItemOwner" class="flex-1 button-outline py-3" @click="goToEditPage">
+            Edit
+          </button>
         </div>
       </div>
     </div>
@@ -114,10 +117,12 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { auth } from '../firebase/firebase-client'
+import { ref, computed } from 'vue'
 
 const router = useRouter()
+const route = useRoute()
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -138,6 +143,7 @@ const props = defineProps({
   },
   allowBuy: { type: Boolean, default: true },
   allowTrade: { type: Boolean, default: true },
+  id: { type: String, required: false },
 })
 
 const selectedImage = ref(0)
@@ -165,10 +171,22 @@ function scrollToChat() {
   }
 }
 
+const isItemOwner = computed(() => {
+  if (!auth.currentUser) return false
+  return props.seller.id === auth.currentUser.uid
+})
+
 function goToUserPage() {
   router.push({
     name: 'profile',
     params: { id: props.seller.id },
+  })
+}
+
+function goToEditPage() {
+  router.push({
+    name: 'item-edit',
+    params: { id: route.params.id },
   })
 }
 </script>

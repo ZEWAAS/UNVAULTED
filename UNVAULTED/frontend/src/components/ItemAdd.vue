@@ -180,7 +180,7 @@
 
       <div class="flex gap-4 mt-6">
         <button @click="saveItem" :disabled="loading" class="flex-1 button-solid py-3">
-          {{ loading ? 'Saving...' : 'Save Item' }}
+          {{ loading ? 'Saving...' : (isEdit ? 'Update Item' : 'Save Item') }}
         </button>
         <button @click="cancel" class="flex-1 button-outline py-3">Cancel</button>
       </div>
@@ -190,18 +190,22 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { addDoc, doc, collection } from 'firebase/firestore'
+import { addDoc, updateDoc, doc, collection } from 'firebase/firestore'
 import { auth, db } from '@/firebase/firebase-client'
 import { useRouter } from 'vue-router'
 import draggable from 'vuedraggable'
 
 import { uploadMultipleFiles } from '@/scripts/cloudinary'
 
+const props = defineProps({
+  isEdit: { type: Boolean, default: false },
+  initialData: { type: Object, default: null },
+  docId: { type: String, default: null
+  }
+})
+
 const router = useRouter()
 
-// ------------------------
-// STATE
-// ------------------------
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
@@ -217,12 +221,8 @@ const item = ref({
   trade: false,
 })
 
-// Array of objects: { id: string, file: File, preview: string }
 const images = ref([])
 
-// ------------------------
-// IMAGE HANDLING
-// ------------------------
 function triggerFileInput() {
   fileInput.value.click()
 }
@@ -245,7 +245,6 @@ function processFiles(fileList) {
 
 function handleImageUpload(e) {
   processFiles(e.target.files)
-  // Reset input so same files can be selected again if needed
   e.target.value = ''
 }
 
@@ -253,14 +252,10 @@ function removeImage(index) {
   images.value.splice(index, 1)
 }
 
-// ------------------------
-// GLOBAL DRAG & DROP
-// ------------------------
 let dragCounter = 0
 
 function onDragEnter(e) {
   e.preventDefault()
-  // Check if dragging files
   if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
     dragCounter++
     isDragging.value = true
@@ -279,12 +274,11 @@ function onDragLeave(e) {
 
 function onDragOver(e) {
   e.preventDefault()
-  // Necessary to allow dropping
 }
 
 function onDrop(e) {
   e.preventDefault()
-  // Reset
+
   dragCounter = 0
   isDragging.value = false
 
@@ -298,6 +292,34 @@ onMounted(() => {
   window.addEventListener('dragleave', onDragLeave)
   window.addEventListener('dragover', onDragOver)
   window.addEventListener('drop', onDrop)
+
+  if (props.isEdit && props.initialData) {
+      item.value.title = props.initialData.Title
+      item.value.description = props.initialData.Description
+      item.value.price = props.initialData.Price
+      item.value.value = props.initialData.Value
+
+      if (props.initialData.SellType === 0) {
+          item.value.sell = true
+          item.value.trade = false
+      } else if (props.initialData.SellType === 1) {
+           item.value.sell = false
+           item.value.trade = true
+      } else if (props.initialData.SellType === 2) {
+          item.value.sell = true
+          item.value.trade = true
+      }
+
+
+      if (props.initialData.Images && props.initialData.Images.length > 0) {
+          images.value = props.initialData.Images.map(url => ({
+              id: url,
+              file: null,
+              preview: url,
+              isExisting: true
+          }))
+      }
+  }
 })
 
 onUnmounted(() => {
@@ -308,9 +330,6 @@ onUnmounted(() => {
 })
 
 
-// ------------------------
-// TOGGLES
-// ------------------------
 function toggleSell() {
   if (!item.value.sell && !item.value.trade) {
     item.value.sell = true
@@ -335,14 +354,10 @@ const type = computed(() => {
   return 'Trade'
 })
 
-// ------------------------
-// SAVE ITEM
-// ------------------------
 async function saveItem() {
   errorMessage.value = ''
   successMessage.value = ''
 
-  // VALIDATION
   if (!item.value.title.trim()) {
     errorMessage.value = 'Name cannot be empty.'
     return
@@ -369,31 +384,55 @@ async function saveItem() {
     const currentUser = auth.currentUser
     const userRef = doc(db, 'Users', currentUser.uid)
 
-    // Extract raw files from the sorted images array
-    const filesToUpload = images.value.map(img => img.file)
+    const newFilesToUpload = images.value.filter(img => !img.isExisting).map(img => img.file)
+    const existingImageUrls = images.value.filter(img => img.isExisting).map(img => img.preview)
 
-    const uploadedUrls = await uploadMultipleFiles(filesToUpload, "items")
+    let uploadedUrls = []
+    if (newFilesToUpload.length > 0) {
+        uploadedUrls = await uploadMultipleFiles(newFilesToUpload, "items")
+    }
+    
+    let uploadIndex = 0
+    const finalImages = images.value.map(img => {
+        if (img.isExisting) {
+            return img.preview
+        } else {
+            return uploadedUrls[uploadIndex++]
+        }
+    })
 
-    const docRef = await addDoc(collection(db, 'Items'), {
-      Likes: 0,
+
+    const itemPayload = {
+      Likes: props.isEdit ? (props.initialData.Likes || 0) : 0,
       Price: item.value.price,
       Value: item.value.value,
-      Cover: uploadedUrls[0], // First image is cover
-      Images: uploadedUrls,
+      Cover: finalImages[0],
+      Images: finalImages,
       SellType: item.value.sell && item.value.trade ? 2 : item.value.sell ? 0 : 1,
-      Seller: userRef,
+      Seller: props.isEdit ? props.initialData.Seller : userRef,
       Title: item.value.title,
       Description: item.value.description,
       available: true,
-      createdAt: new Date(),
-    })
+      updatedAt: new Date(),
+    }
+    
+    if (!props.isEdit) {
+        itemPayload.createdAt = new Date()
+    }
 
-    successMessage.value = 'Item successfully added!'
-
-    // Redirect to user profile after short delay
-    setTimeout(() => {
-      router.push(`/profile/${currentUser.uid}`)
-    }, 800)
+    if (props.isEdit) {
+        await updateDoc(doc(db, 'Items', props.docId), itemPayload)
+        successMessage.value = 'Item successfully updated!'
+        setTimeout(() => {
+             router.push(`/items/${props.docId}`)
+        }, 800)
+    } else {
+        const docRef = await addDoc(collection(db, 'Items'), itemPayload)
+         successMessage.value = 'Item successfully added!'
+        setTimeout(() => {
+            router.push(`/profile/${currentUser.uid}`)
+        }, 800)
+    }
   } catch (error) {
     console.error(error)
     errorMessage.value = 'Could not save item. Please try again.'

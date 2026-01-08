@@ -19,6 +19,7 @@ const routes = [
   { path: '/signup', name: 'signup', component: () => import('../views/SignupView.vue') },
   { path: '/following', name: 'following', component: () => import('../views/FollowingView.vue') },
   { path: '/items/:id', name: 'items', component: () => import('../views/ItemView.vue') },
+  { path: '/items/edit/:id', name: 'item-edit', component: () => import('../views/ItemView.vue') },
 ]
 
 const router = createRouter({
