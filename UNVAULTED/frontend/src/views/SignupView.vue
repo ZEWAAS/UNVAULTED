@@ -47,7 +47,18 @@
             </button>
           </form>
 
-          <p class="text-gray-400 mt-4">
+          <p
+            class="text-sm pt-2 text-gray-400 cursor-pointer hover:underline"
+            @click="handlePasswordReset"
+          >
+            Forgot your password?
+          </p>
+
+          <p v-if="resetMessage" class="text-green-400 text-sm mt-2">
+            {{ resetMessage }}
+          </p>
+
+          <p class="text-gray-400 pt-1">
             No account?
             <span
               @click="isLogin = false"
@@ -159,6 +170,7 @@ import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
   signOut,
+  sendPasswordResetEmail,
 } from 'firebase/auth'
 
 const router = useRouter()
@@ -171,6 +183,7 @@ const formLogin = ref({ email: '', password: '' })
 const formSignup = ref({ firstname: '', lastname: '', email: '', password: '' })
 
 const loginErrors = ref({})
+const resetMessage = ref('')
 const signupErrors = ref({})
 
 // Real Time Password criteria
@@ -228,6 +241,24 @@ async function handleLogin() {
   }
 }
 
+async function handlePasswordReset() {
+  resetMessage.value = ''
+  loginErrors.value = {}
+
+  if (!formLogin.value.email) {
+    loginErrors.value.email = 'Email required'
+    return
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, formLogin.value.email)
+    resetMessage.value = 'Password reset email sent. Check your inbox.'
+  } catch (err) {
+    resetMessage.value = 'Could not send password reset email.'
+    console.error(err)
+  }
+}
+
 async function handleSignup() {
   signupErrors.value = {}
 
@@ -251,7 +282,6 @@ async function handleSignup() {
     )
 
     await sendEmailVerification(userCred.user)
-
 
     await setDoc(doc(db, 'Users', userCred.user.uid), {
       Email: formSignup.value.email,
