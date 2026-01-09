@@ -271,8 +271,8 @@
             </p>
 
             <ReviewComponent
-              v-for="(review, index) in user.Reviews"
-              :key="index"
+              v-for="review in user.Reviews"
+              :key="review.User.id"
               :text="review.Text"
               :rating="review.Rating"
               :user="review.User"

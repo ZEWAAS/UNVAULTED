@@ -72,12 +72,12 @@
             Current Offer
           </p>
           <div class="flex flex-row px-4 py-1">
-            <div class="flex flex-col items-center">
+            <div class="flex flex-col items-center" v-if="allowBuy">
               <p class="px-2">Price:</p>
               <p class="text-xl p-1">€{{ activeChatOffer.price ?? 0 }}</p>
             </div>
 
-            <div class="flex flex-col items-center">
+            <div class="flex flex-col items-center" v-if="allowTrade">
               <p class="px-2">Item-Value:</p>
               <p class="text-xl p-1">€{{ totalItemValue ?? 0 }}</p>
             </div>
@@ -137,15 +137,16 @@
       <div v-if="chatExists && allowBuy" class="p-3 border-t border-gray-200 bg-white flex gap-2">
         <input
           v-model="offerPrice"
-          v-if="!isSeller"
+          v-if="!isSeller && allowBuy"
           type="number"
           placeholder="€ Offer"
           class="flex-1 border rounded-lg px-3 py-1 text-sm"
         />
-        <button @click="updateOffer" v-if="!isSeller" class="button-outline text-sm w-[25%]">
+        <button @click="updateOffer" v-if="!isSeller && allowBuy" class="button-outline text-sm w-[25%]">
           Update Offer
         </button>
         <button
+        v-if="allowTrade"
           @click="showItems = !showItems"
           :class="{
             'w-[50%] flex-1 text-center': true,
