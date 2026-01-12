@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { db } from '../config/firebase';
 import { AuthRequest } from '../middleware/auth';
 import admin from 'firebase-admin';
+import { updateLikeCountInCache } from './search';
+
 
 export const toggleLike = async (req: AuthRequest, res: Response) => {
   try {
@@ -47,6 +49,7 @@ export const toggleLike = async (req: AuthRequest, res: Response) => {
         t.update(itemRef, {
             Likes: admin.firestore.FieldValue.increment(-1)
         });
+        updateLikeCountInCache(itemId, -1);
       } else {
         // Like
         t.update(userRef, {
@@ -55,6 +58,7 @@ export const toggleLike = async (req: AuthRequest, res: Response) => {
         t.update(itemRef, {
             Likes: admin.firestore.FieldValue.increment(1)
         });
+        updateLikeCountInCache(itemId, 1);
       }
     });
 

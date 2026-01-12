@@ -202,3 +202,12 @@ export const search = async (req: Request, res: Response) => {
   }
 };
 
+export function updateLikeCountInCache(itemId: string, delta: number) {
+    if (itemsCache) {
+        const item = itemsCache.find(i => i.id === itemId);
+        if (item) {
+            item.Likes = (item.Likes || 0) + delta;
+        }
+    }
+}
+
