@@ -11,7 +11,6 @@ const itemsResolvedMap = ref({})
 const loading = ref(false)
 const allLoaded = ref(false)
 
-/* ---------------- LOAD FAVORITES ---------------- */
 
 async function loadFavorites() {
   loading.value = true
@@ -32,7 +31,6 @@ async function loadFavorites() {
       loading.value = false
       return
     }
-    // --- resolve item references ---
     const docs = await Promise.all(
       favorites.map(async (itemRef) => {
         const snap = await getDoc(itemRef)

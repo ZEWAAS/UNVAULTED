@@ -331,7 +331,6 @@ async function toggleWantedItem(itemId) {
   })
 }
 
-// --- LOAD BUYER ITEMS ---
 async function loadUserItems(userId) {
   if (!userId) return
 
@@ -344,7 +343,8 @@ async function loadUserItems(userId) {
     .filter((item) => item.SellType !== 0)
 }
 
-// --- CHAT FUNCTIONS ---
+
+
 function isNewDay(i) {
   if (i === 0) return true
   const a = messages.value[i - 1].createdAt?.toDate()
@@ -382,10 +382,9 @@ async function openChat(id) {
   activeChat.value = chats.value.find((c) => c.id === id)
   chatExists.value = true
 
-  // 🔑 determine whose items to load
   const itemsOwnerId = props.isSeller
-    ? activeChat.value.participant.id // buyer items
-    : currentUserId // buyer viewing own items
+    ? activeChat.value.participant.id
+    : currentUserId
 
   await loadUserItems(itemsOwnerId)
 
@@ -400,19 +399,16 @@ async function openChat(id) {
     },
   )
 
-  // live offer updates
   onSnapshot(doc(db, 'Chats', id), (snap) => {
     if (!snap.exists()) return
 
     activeChat.value.offer = snap.data().offer || {}
 
-    // --- BUYER OFFERED ITEMS ---
     offeredItemsMap.value = {}
     ;(activeChat.value.offer.items || []).forEach((ref) => {
       offeredItemsMap.value[ref.id] = true
     })
 
-    // --- SELLER WANTED ITEMS ---
     wantedItemsMap.value = {}
     ;(activeChat.value.offer.wanted || []).forEach((ref) => {
       wantedItemsMap.value[ref.id] = true
