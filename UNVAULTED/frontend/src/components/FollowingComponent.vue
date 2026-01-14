@@ -1,7 +1,9 @@
 <template>
   <div class="w-[100%] rounded-xl px-4 h-fit border border-[var(--color-border)]">
-    <div class="flex gap-4 items-stretch w-full ">
-      <div class="w-70  flex flex-col items-center justify-center py-4 pr-4 border-r border-[var(--color-border)]">
+    <div class="flex gap-4 items-stretch w-full">
+      <div
+        class="w-70 flex flex-col items-center justify-center py-4 pr-4 border-r border-[var(--color-border)]"
+      >
         <img :src="user.Image || defaultProfile" class="w-50 h-50 rounded-full object-cover" />
 
         <p class="font-bold text-2xl text-gray-800 text-center select-none pt-10 pb-3">
@@ -26,7 +28,7 @@
             :title="item.Title"
             :price="item.Price"
             :image="item.Images?.[0] || ''"
-            :seller="item.Seller"
+            :seller="user"
             :likeCount="item.Likes"
             :sellType="item.SellType === 0 ? 'Sell' : item.SellType === 1 ? 'Trade' : 'Sell/Trade'"
             class="shrink-0"

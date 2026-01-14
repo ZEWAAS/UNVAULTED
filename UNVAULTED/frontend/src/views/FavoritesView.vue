@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/firebase/firebase-client'
 import ItemComponent from '../components/ItemComponent.vue'
+import { i } from 'vite/dist/node/chunks/moduleRunnerTransport'
 
 const items = ref([])
 const itemsResolvedMap = ref({})
@@ -75,7 +76,7 @@ onMounted(() => {
             :image="
               item.Images && item.Images.length > 0 ? item.Images[0] : 'https://placehold.co/400'
             "
-            :seller="item.Seller"
+            :seller="item.seller"
             :likeCount="item.Likes || 0"
             :sellType="item.sellTypeString"
             :distance="100"
