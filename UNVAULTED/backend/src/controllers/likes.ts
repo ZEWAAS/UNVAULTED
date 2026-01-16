@@ -35,14 +35,9 @@ export const toggleLike = async (req: AuthRequest, res: Response) => {
       const favorites = userData?.Favorites || [];
       const itemData = itemDoc.data();
       
-      // Check if already liked (assuming Favorites is array of references or objects with id)
-      // Favorites stored as references in previous code, let's checking logic.
-      // Based on previous code: Favorites: arrayUnion(itemRef) -> It stores references.
-      
       const isLiked = favorites.some((fav: any) => fav.id === itemRef.id);
 
       if (isLiked) {
-        // Unlike
         t.update(userRef, {
             Favorites: admin.firestore.FieldValue.arrayRemove(itemRef)
         });
@@ -51,7 +46,6 @@ export const toggleLike = async (req: AuthRequest, res: Response) => {
         });
         updateLikeCountInCache(itemId, -1);
       } else {
-        // Like
         t.update(userRef, {
             Favorites: admin.firestore.FieldValue.arrayUnion(itemRef)
         });

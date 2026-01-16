@@ -174,7 +174,6 @@ export const search = async (req: Request, res: Response) => {
     const paginatedResults = results.slice(startIndex, endIndex).map(item => {
         let sellerData = null;
         if (item.Seller) {
-            // item.Seller is a DocumentReference in the raw data, so it has .id
             const sid = item.Seller.id;
             const sData = sellersCache.get(sid);
             if (sData) {
@@ -184,7 +183,6 @@ export const search = async (req: Request, res: Response) => {
                     LastName: sData.LastName, 
                     Image: sData.Image,
                     Location: sData.Location
-                    // Add other needed fields if necessary
                 };
             }
         }

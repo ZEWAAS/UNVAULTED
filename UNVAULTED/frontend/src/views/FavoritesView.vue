@@ -3,7 +3,6 @@ import { ref, onMounted } from 'vue'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/firebase/firebase-client'
 import ItemComponent from '../components/ItemComponent.vue'
-import { i } from 'vite/dist/node/chunks/moduleRunnerTransport'
 
 const items = ref([])
 const itemsResolvedMap = ref({})
